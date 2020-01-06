@@ -1,0 +1,19 @@
+- args:
+    permission:
+      allow_aggregations: true
+      columns:
+      - SalesPointID
+      - ItemCode
+      - ItemName
+      - CostingCode
+      - Group
+      - SubGroup
+      - WarehouseCode
+      - CostingCode2
+      filter: {}
+      limit: null
+    role: cajero
+    table:
+      name: SalesPointItem
+      schema: public
+  type: create_select_permission

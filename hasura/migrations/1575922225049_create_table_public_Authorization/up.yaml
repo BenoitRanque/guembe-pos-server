@@ -1,0 +1,10 @@
+- args:
+    sql: CREATE TABLE "public"."Authorization"("Authorization" text NOT NULL, "CostingCode"
+      text NOT NULL, "TaxCode" text NOT NULL, "IT" boolean NOT NULL, PRIMARY KEY ("Authorization")
+      , FOREIGN KEY ("CostingCode") REFERENCES "public"."CostingCode"("CostingCode")
+      ON UPDATE restrict ON DELETE restrict);
+  type: run_sql
+- args:
+    name: Authorization
+    schema: public
+  type: add_existing_table_or_view

@@ -1,0 +1,7 @@
+- args:
+    sql: ALTER TABLE "public"."SalesPointItem" ALTER COLUMN "CostingCode2" DROP NOT
+      NULL;
+  type: run_sql
+- args:
+    sql: COMMENT ON COLUMN "public"."SalesPointItem"."CostingCode2" IS E'null'
+  type: run_sql

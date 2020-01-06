@@ -1,0 +1,8 @@
+- args:
+    sql: CREATE TABLE "public"."TaxGroup"("TaxGroupID" text NOT NULL, "TaxGroupName"
+      text NOT NULL, PRIMARY KEY ("TaxGroupID") );
+  type: run_sql
+- args:
+    name: TaxGroup
+    schema: public
+  type: add_existing_table_or_view

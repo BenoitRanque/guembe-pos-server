@@ -1,0 +1,4 @@
+- args:
+    sql: alter table "public"."SalesPointItem" add foreign key ("CostingCode") references
+      "public"."CostingCode"("CostingCode") on update restrict on delete restrict;
+  type: run_sql

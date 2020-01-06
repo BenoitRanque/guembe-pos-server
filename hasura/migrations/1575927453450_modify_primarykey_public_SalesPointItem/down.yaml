@@ -1,0 +1,6 @@
+- args:
+    sql: alter table "public"."SalesPointItem" drop constraint "SalesPointItem_pkey";
+  type: run_sql
+- sql: "alter table \"public\".\"SalesPointItem\"\n    add constraint \"SalesPointItem_pkey\"
+    \n    primary key ( \"ItemName\", \"SalesPointID\" );"
+  type: run_sql

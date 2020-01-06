@@ -1,0 +1,6 @@
+- args:
+    sql: ALTER TABLE "public"."TaxAuthorization" ALTER COLUMN "ValidTo" DROP NOT NULL;
+  type: run_sql
+- args:
+    sql: COMMENT ON COLUMN "public"."TaxAuthorization"."ValidTo" IS E'null'
+  type: run_sql

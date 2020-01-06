@@ -1,0 +1,10 @@
+- args:
+    sql: ALTER TABLE "public"."SalesPointItem" ADD COLUMN "TaxExempt" bool
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."SalesPointItem" ALTER COLUMN "TaxExempt" DROP NOT NULL
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."SalesPointItem" ALTER COLUMN "TaxExempt" SET DEFAULT
+      false
+  type: run_sql

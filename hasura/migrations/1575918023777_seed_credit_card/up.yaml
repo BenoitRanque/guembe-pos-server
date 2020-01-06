@@ -1,0 +1,9 @@
+- args:
+    cascade: false
+    sql: |-
+      INSERT INTO "CreditCard" VALUES
+          (1, 'LINKSER BS', '_SYS00000000130'),
+          (2, 'LINKSER USD', '_SYS00000000130'),
+          (3, 'ATC BS', '_SYS00000000138'),
+          (4, 'ATC USD', '_SYS00000000138');
+  type: run_sql

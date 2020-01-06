@@ -1,0 +1,6 @@
+- args:
+    sql: COMMENT ON COLUMN "public"."TaxAuthorization"."TaxGroupID" IS E''
+  type: run_sql
+- args:
+    sql: alter table "public"."TaxAuthorization" rename column "TaxGroupID" to "TaxGroup";
+  type: run_sql

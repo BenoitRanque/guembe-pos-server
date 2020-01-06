@@ -1,0 +1,20 @@
+- args:
+    permission:
+      allow_aggregations: true
+      columns:
+      - SalesPointID
+      - CostingCode
+      - CostingCode2
+      - Group
+      - ItemCode
+      - ItemName
+      - SubGroup
+      - TaxGroupID
+      - WareHouseCode
+      filter: {}
+      limit: null
+    role: anonymous
+    table:
+      name: SalesPointItem
+      schema: public
+  type: create_select_permission

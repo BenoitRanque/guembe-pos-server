@@ -1,0 +1,14 @@
+- args:
+    sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+  type: run_sql
+- args:
+    sql: CREATE TABLE "public"."TaxAuthorization"("TaxAuthorizationID" uuid NOT NULL
+      DEFAULT gen_random_uuid(), "TaxAuthorizationCode" text NOT NULL, "TaxAuthorizationName"
+      text NOT NULL, "TaxGroupID" text NOT NULL, PRIMARY KEY ("TaxAuthorizationID")
+      , FOREIGN KEY ("TaxGroupID") REFERENCES "public"."TaxGroup"("TaxGroupID") ON
+      UPDATE restrict ON DELETE restrict);
+  type: run_sql
+- args:
+    name: TaxAuthorization
+    schema: public
+  type: add_existing_table_or_view

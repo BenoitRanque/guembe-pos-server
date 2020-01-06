@@ -1,0 +1,7 @@
+- args:
+    sql: COMMENT ON COLUMN "public"."TaxGroup"."DefaultTaxAuthorization" IS E'null'
+  type: run_sql
+- args:
+    sql: alter table "public"."TaxGroup" rename column "DefaultTaxAuthorizationID"
+      to "DefaultTaxAuthorization";
+  type: run_sql

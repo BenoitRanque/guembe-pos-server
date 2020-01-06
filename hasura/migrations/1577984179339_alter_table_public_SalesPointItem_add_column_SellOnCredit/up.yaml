@@ -1,0 +1,4 @@
+- args:
+    sql: ALTER TABLE "public"."SalesPointItem" ADD COLUMN "SellOnCredit" boolean NOT
+      NULL DEFAULT true;
+  type: run_sql

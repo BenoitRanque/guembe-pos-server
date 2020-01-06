@@ -1,0 +1,6 @@
+- args:
+    sql: "\n           alter table \"public\".\"SalesPointItem\"\n           add constraint
+      \"SalesPointItem_TaxGroup_fkey\"\n           foreign key (\"TaxGroup\")\n           references
+      \"public\".\"TaxGroup\"\n           (\"TaxGroup\") on update restrict on delete
+      restrict;\n      "
+  type: run_sql

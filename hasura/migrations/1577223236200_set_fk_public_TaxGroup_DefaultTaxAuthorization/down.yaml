@@ -1,0 +1,4 @@
+- args:
+    sql: "\n          alter table \"public\".\"TaxGroup\" drop constraint \"TaxGroup_DefaultTaxAuthorization_fkey\"\n
+      \     "
+  type: run_sql

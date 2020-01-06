@@ -1,0 +1,10 @@
+- args:
+    sql: ALTER TABLE "public"."TaxGroup" ADD CONSTRAINT "TaxGroup_TaxGroupID_key"
+      UNIQUE ("TaxGroupID")
+  type: run_sql
+- args:
+    sql: COMMENT ON COLUMN "public"."TaxGroup"."TaxGroupID" IS E''
+  type: run_sql
+- args:
+    sql: alter table "public"."TaxGroup" rename column "TaxGroupID" to "TaxGroup";
+  type: run_sql

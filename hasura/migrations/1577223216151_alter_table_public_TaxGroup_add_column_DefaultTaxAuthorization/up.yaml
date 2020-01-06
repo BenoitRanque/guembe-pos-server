@@ -1,0 +1,4 @@
+- args:
+    sql: ALTER TABLE "public"."TaxGroup" ADD COLUMN "DefaultTaxAuthorization" uuid
+      NULL;
+  type: run_sql

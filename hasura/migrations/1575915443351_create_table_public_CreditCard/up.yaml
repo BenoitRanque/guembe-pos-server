@@ -1,0 +1,8 @@
+- args:
+    sql: CREATE TABLE "public"."CreditCard"("CreditCard" integer NOT NULL, "CardName"
+      text NOT NULL, "CreditAcct" text NOT NULL, PRIMARY KEY ("CreditCard") );
+  type: run_sql
+- args:
+    name: CreditCard
+    schema: public
+  type: add_existing_table_or_view

@@ -1,0 +1,14 @@
+- args:
+    permission:
+      allow_aggregations: true
+      columns:
+      - CardName
+      - CreditAcct
+      - CreditCard
+      filter: {}
+      limit: null
+    role: anonymous
+    table:
+      name: CreditCard
+      schema: public
+  type: create_select_permission

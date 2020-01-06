@@ -1,0 +1,6 @@
+- args:
+    sql: COMMENT ON COLUMN "public"."SalesPointItem"."WarehouseCode" IS E''
+  type: run_sql
+- args:
+    sql: alter table "public"."SalesPointItem" rename column "WarehouseCode" to "WareHouseCode";
+  type: run_sql

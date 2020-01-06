@@ -1,0 +1,9 @@
+- args:
+    sql: ALTER TABLE "public"."TaxAuthorization" ADD COLUMN "IVA" bool
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."TaxAuthorization" ALTER COLUMN "IVA" DROP NOT NULL
+  type: run_sql
+- args:
+    sql: ALTER TABLE "public"."TaxAuthorization" ALTER COLUMN "IVA" SET DEFAULT true
+  type: run_sql

@@ -1,0 +1,4 @@
+- args:
+    sql: "\n          alter table \"public\".\"SalesPointItem\" drop constraint \"SalesPointItem_TaxGroup_fkey\"\n
+      \     "
+  type: run_sql
