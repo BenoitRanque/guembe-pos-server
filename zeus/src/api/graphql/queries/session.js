@@ -36,8 +36,8 @@ module.exports = {
       ...employee.SalesPerson
     }))
   },
-  async session_login ({ Credentials: { EmployeeID = null, Password = '' }, SalesPointCode }, { res }) {  
-    const employee = Object.assign({ SalesPointCode }, await authenticateEmployee({ EmployeeID, Password }))
+  async session_login ({ Credentials: { EmployeeID = null, Password = '' } }, { res }) {  
+    const employee = await authenticateEmployee({ EmployeeID, Password })
     
     const session = {
       ...employee,

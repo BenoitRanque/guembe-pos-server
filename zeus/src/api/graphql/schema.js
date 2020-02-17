@@ -16,7 +16,6 @@ const schema = buildSchema(/* GraphQL */`
 
   type Session {
     EmployeeID: Int!
-    SalesPointCode: String!
     SalesEmployeeCode: Int!
     SalesEmployeeName: String
     Roles: [String!]!
@@ -62,6 +61,7 @@ const schema = buildSchema(/* GraphQL */`
     U_RAZSOC: String!
   }
   input QuickSaleInput {
+    SalesPointCode: String!
     CardCode: String!
     Items: [ItemInput!]!
     Invoice: InvoiceInput!
@@ -178,7 +178,7 @@ const schema = buildSchema(/* GraphQL */`
   type Query {
     test: String
     session_employees(top: Int skip: Int): [Employee!]!
-    session_login (Credentials: CredentialsInput! SalesPointCode: String!): Auth!
+    session_login (Credentials: CredentialsInput!): Auth!
     session_logout: Boolean!
     session_refresh: Auth!
     creditcard (CreditCardCode: Int!): CreditCard!
