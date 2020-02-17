@@ -1,6 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" ADD COLUMN "TaxCode" text
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" ALTER COLUMN "TaxCode" DROP NOT NULL
-  type: run_sql

@@ -1,7 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxGroup" ADD COLUMN "DefaultTaxAuthorizationID" uuid
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."TaxGroup" ALTER COLUMN "DefaultTaxAuthorizationID"
-      DROP NOT NULL
-  type: run_sql

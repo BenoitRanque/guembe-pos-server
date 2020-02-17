@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" DROP COLUMN "ValidFrom";
-  type: run_sql

@@ -1,6 +1,0 @@
-- args:
-    sql: COMMENT ON COLUMN "public"."SalesPointItem"."Group" IS E''
-  type: run_sql
-- args:
-    sql: alter table "public"."SalesPointItem" rename column "Group" to "DisplayGroup";
-  type: run_sql

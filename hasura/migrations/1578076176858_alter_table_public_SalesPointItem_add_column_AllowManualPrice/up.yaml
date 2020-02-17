@@ -1,4 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" ADD COLUMN "AllowManualPrice" boolean
-      NOT NULL DEFAULT false;
-  type: run_sql

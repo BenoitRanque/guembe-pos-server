@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" DROP COLUMN "AllowManualPrice";
-  type: run_sql

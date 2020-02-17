@@ -1,6 +1,0 @@
-- args:
-    sql: COMMENT ON COLUMN "public"."SalesPointItem"."WhsCode" IS E'null'
-  type: run_sql
-- args:
-    sql: alter table "public"."SalesPointItem" rename column "WarehouseCode" to "WhsCode";
-  type: run_sql

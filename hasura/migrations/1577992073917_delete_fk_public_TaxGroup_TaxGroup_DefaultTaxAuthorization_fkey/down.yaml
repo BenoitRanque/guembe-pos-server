@@ -1,5 +1,0 @@
-- args:
-    sql: alter table "public"."TaxGroup" add foreign key ("DefaultTaxAuthorizationID")
-      references "public"."TaxAuthorization"("TaxAuthorizationID") on update restrict
-      on delete restrict;
-  type: run_sql

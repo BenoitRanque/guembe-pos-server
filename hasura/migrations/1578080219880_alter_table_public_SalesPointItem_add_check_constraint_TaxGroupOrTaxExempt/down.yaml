@@ -1,4 +1,0 @@
-- args:
-    cascade: false
-    sql: alter table "public"."SalesPointItem" drop constraint "TaxGroupOrTaxExempt"
-  type: run_sql

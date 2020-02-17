@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPoint" DROP COLUMN "SalesPointName";
-  type: run_sql

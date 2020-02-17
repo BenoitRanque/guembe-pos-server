@@ -1,11 +1,5 @@
 version: '3.7'
 services:
-  postgres:
-    volumes:
-      - postgres:/var/lib/postgresql/data
-  pgadmin:
-    volumes:
-      - pgadmin:/var/lib/pgadmin
   zeus:
     image: zeus:dev
     build:
@@ -17,6 +11,4 @@ services:
     volumes:
       - ./zeus/src:/usr/app/src
       - ./node_modules:/usr/app/src/node_modules
-volumes:
-  postgres:
-  pgadmin:
+      

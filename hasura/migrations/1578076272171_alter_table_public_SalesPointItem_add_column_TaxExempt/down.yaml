@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" DROP COLUMN "TaxExempt";
-  type: run_sql

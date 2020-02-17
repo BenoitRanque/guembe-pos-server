@@ -1,6 +1,0 @@
-- args:
-    sql: "\n           alter table \"public\".\"TaxGroup\"\n           add constraint
-      \"TaxGroup_DefaultTaxAuthorization_fkey\"\n           foreign key (\"DefaultTaxAuthorization\")\n
-      \          references \"public\".\"TaxAuthorization\"\n           (\"TaxAuthorizationID\")
-      on update restrict on delete restrict;\n      "
-  type: run_sql

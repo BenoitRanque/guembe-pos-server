@@ -1,7 +1,0 @@
-- args:
-    cascade: false
-    sql: |-
-      alter table "public"."SalesPointItem" add constraint "TaxGroupOrTaxExempt" check (("TaxGroup" is null and "TaxExempt" = true)
-      or
-      ("TaxGroup" is not null and "TaxExempt" = false) )
-  type: run_sql

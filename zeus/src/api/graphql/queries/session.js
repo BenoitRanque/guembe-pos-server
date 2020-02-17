@@ -13,7 +13,7 @@ module.exports = {
     const params = {
       '$expand': `SalesPerson`,
       '$select': `EmployeeID,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName`,
-      '$filter': `Active eq 'tYES' and not U_GMBPOS_Password eq null and not SalesPersonCode eq null`,
+      '$filter': `Active eq 'tYES' and not U_GPOS_Password eq null and not SalesPersonCode eq null`,
       '$orderby': `LastName asc`
     }
     
@@ -36,8 +36,8 @@ module.exports = {
       ...employee.SalesPerson
     }))
   },
-  async session_login ({ Credentials: { EmployeeID = null, Password = '' }, SalesPointID }, { res }) {  
-    const employee = Object.assign({ SalesPointID }, await authenticateEmployee({ EmployeeID, Password }))
+  async session_login ({ Credentials: { EmployeeID = null, Password = '' }, SalesPointCode }, { res }) {  
+    const employee = Object.assign({ SalesPointCode }, await authenticateEmployee({ EmployeeID, Password }))
     
     const session = {
       ...employee,
@@ -62,7 +62,7 @@ module.exports = {
       throw new Error('No refresh token')
     }
 
-    const employee = decodeToken(token)
+    const employee = await decodeToken(token)
 
     const session = {
       ...employee,

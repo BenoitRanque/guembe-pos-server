@@ -1,5 +1,0 @@
-- args:
-    table:
-      name: CostingCode
-      schema: public
-  type: untrack_table

@@ -1,7 +1,0 @@
-- args:
-    sql: COMMENT ON COLUMN "public"."SalesPointItem"."SubGroup" IS E'null'
-  type: run_sql
-- args:
-    sql: alter table "public"."SalesPointItem" rename column "SubDisplayGroup" to
-      "SubGroup";
-  type: run_sql

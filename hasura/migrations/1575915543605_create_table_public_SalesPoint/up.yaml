@@ -1,8 +1,0 @@
-- args:
-    sql: CREATE TABLE "public"."SalesPoint"("SalesPointID" integer NOT NULL, "CashAccount"
-      text NOT NULL, "CostingCode2" text NOT NULL, PRIMARY KEY ("SalesPointID") );
-  type: run_sql
-- args:
-    name: SalesPoint
-    schema: public
-  type: add_existing_table_or_view

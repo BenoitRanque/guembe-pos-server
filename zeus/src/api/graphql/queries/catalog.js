@@ -2,9 +2,10 @@ const { client: sap } = require('utils/sap')
 
 async function getItemDetails(ItemCode) {
   try {
+    // note: we may want to select ItemWarehouseInfoCollection if we want to be aware of stock levels
     const { data } = await sap.get(`/Items('${ItemCode}')`, {
       params: {
-        '$select': 'ItemCode,ItemName,InventoryItem,ItemPrices,ItemWarehouseInfoCollection'
+        '$select': 'ItemCode,ItemName,ItemPrices,U_GPOS_AllowManualPrice,U_GPOS_AllowCredit,U_GPOS_AllowAffiliate'
       }
     })
     return data    
@@ -17,11 +18,33 @@ async function getItemDetails(ItemCode) {
 }
 
 module.exports = {
-  async item_details ({ ItemCode }, ctx) {
-    return getItemDetails(ItemCode)
+  async salespoint ({ Code }) {
+    const { data: SalesPoint } = await sap.get(`/GPosSalesPoint('${Code}')`)
+
+    return {
+      Code: SalesPoint.Code,
+      Name: SalesPoint.Name,
+      Catalog: await Promise.all(SalesPoint.GPOS_SALESITEMCollection.map(async Item => {
+        const ItemDetails = await getItemDetails(Item.U_ItemCode)
+
+        return {
+          ItemCode: ItemDetails.ItemCode,
+          ItemName: ItemDetails.ItemName,
+          AllowManualPrice: ItemDetails.U_GPOS_AllowManualPrice === 1,
+          AllowCredit: ItemDetails.U_GPOS_AllowCredit === 1,
+          AllowAffiliate: ItemDetails.U_GPOS_AllowAffiliate === 1,
+          ItemPrices: ItemDetails.ItemPrices.map(({ PriceList, Price }) => ({ PriceList, Price }))
+        }
+      }))
+    }
   },
-  async items_details ({ ItemCodes }, ctx) {
-    return Promise.all(ItemCodes.map(getItemDetails))
+  async creditcard ({ CreditCardCode }) {
+    const { data } = await sap.get(`/CreditCards(${CreditCardCode})`)
+    return data
+  },
+  async creditcards () {
+    const { data: { value } } = await sap.get(`/CreditCards`)
+    return value
   },
   async pricelist ({ PriceListNo }) {
     const { data } = await sap.get(`/PriceLists(${PriceListNo})`, {
@@ -41,14 +64,14 @@ module.exports = {
 
     return value
   },
-  async clients ({ search = null, limit = 20, offset = 0 }) {
+  async business_partners ({ search = null, limit = 20, offset = 0 }) {
     const { data: { ['odata.count']: count, value: items }  } = await sap.get(`BusinessPartners`, {
       headers: {
         'Prefer': 'odata.maxpagesize=0',
         'B1S-CaseInsensitive': true
       },
       params: {
-        '$select': 'CardCode,CardName,GroupCode,CardForeignName,FederalTaxID,PayTermsGrpCode,PriceListNum,PriceList/PriceListNo,PriceList/PriceListName',
+        '$select': 'CardCode,CardName,GroupCode,CardForeignName,FederalTaxID,PayTermsGrpCode,PriceListNum,PriceList/PriceListNo,PriceList/PriceListName,VatLiable,Affiliate',
         '$expand': 'PriceList',
         '$filter': `${search ? `contains(CardName, '${search}') and ` : ''}CardType eq 'cCustomer' and Valid eq 'Y' and Frozen eq 'N'`,
         '$orderby': 'CardName asc',
@@ -60,17 +83,25 @@ module.exports = {
 
     return {
       count,
-      items
+      items: items.map(item => ({
+        ...item,
+        VatLiable: item.VatLiable === 'vLiable',
+        Affiliate: item.Affiliate === 'tYES'
+      }))
     }
   },
-  async client ({ CardCode }) {
+  async business_partner ({ CardCode }) {
     const { data } = await sap.get(`BusinessPartners('${CardCode}')`, {
       params: {
-        '$select': 'CardCode,CardName,GroupCode,CardForeignName,FederalTaxID,PayTermsGrpCode,PriceListNum,PriceList/PriceListNo,PriceList/PriceListName',
+        '$select': 'CardCode,CardName,GroupCode,CardForeignName,FederalTaxID,PayTermsGrpCode,PriceListNum,PriceList/PriceListNo,PriceList/PriceListName,VatLiable,Affiliate',
         '$expand': 'PriceList'
       }
     })
 
-    return data
+    return {
+      ...data,
+      VatLiable: data.VatLiable === 'vLiable',
+      Affiliate: data.Affiliate === 'tYES'
+    }
   }
 }

@@ -1,6 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" ADD COLUMN "IT" bool
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" ALTER COLUMN "IT" DROP NOT NULL
-  type: run_sql

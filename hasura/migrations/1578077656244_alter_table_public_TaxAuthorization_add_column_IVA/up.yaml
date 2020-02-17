@@ -1,4 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" ADD COLUMN "IVA" boolean NOT NULL
-      DEFAULT true;
-  type: run_sql

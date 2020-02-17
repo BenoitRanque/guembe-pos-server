@@ -8,7 +8,7 @@ module.exports = {
     await authenticateEmployee({ EmployeeID, Password })
     
     await sap.patch(`/EmployeesInfo(${EmployeeID})`, {
-      U_GMBPOS_Password: await bcrypt.hash(NewPassword, 12)
+      U_GPOS_Password: await bcrypt.hash(NewPassword, 12)
     })
 
     return true
@@ -21,7 +21,7 @@ module.exports = {
     })
 
     await axios.create(clientOptions).patch(`/EmployeesInfo(${EmployeeID})`, {
-      U_GMBPOS_Password: await bcrypt.hash(NewPassword, 12)
+      U_GPOS_Password: await bcrypt.hash(NewPassword, 12)
     }, {
       headers: {
         'Cookie': getCookieHeader(cookies)

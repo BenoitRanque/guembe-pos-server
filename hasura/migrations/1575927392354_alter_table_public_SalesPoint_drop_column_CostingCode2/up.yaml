@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPoint" DROP COLUMN "CostingCode2" CASCADE
-  type: run_sql

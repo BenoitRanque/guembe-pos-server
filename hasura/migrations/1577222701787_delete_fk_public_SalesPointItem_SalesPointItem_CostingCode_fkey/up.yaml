@@ -1,3 +1,0 @@
-- args:
-    sql: alter table "public"."SalesPointItem" drop constraint "SalesPointItem_CostingCode_fkey";
-  type: run_sql

@@ -1,4 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" ADD COLUMN "ValidFrom" date NOT NULL
-      DEFAULT now();
-  type: run_sql

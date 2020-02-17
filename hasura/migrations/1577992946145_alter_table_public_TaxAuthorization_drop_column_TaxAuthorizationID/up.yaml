@@ -1,4 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxAuthorization" DROP COLUMN "TaxAuthorizationID"
-      CASCADE
-  type: run_sql

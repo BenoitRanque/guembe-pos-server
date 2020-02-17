@@ -16,7 +16,7 @@ const schema = buildSchema(/* GraphQL */`
 
   type Session {
     EmployeeID: Int!
-    SalesPointID: Int!
+    SalesPointCode: String!
     SalesEmployeeCode: Int!
     SalesEmployeeName: String
     Roles: [String!]!
@@ -56,7 +56,6 @@ const schema = buildSchema(/* GraphQL */`
     OwnerPhone: String
   }
   input InvoiceInput {
-    VATExempt: Boolean!
     PaymentGroupCode: Int!
     Payment: PaymentInput
     U_NIT: String!
@@ -68,59 +67,59 @@ const schema = buildSchema(/* GraphQL */`
     Invoice: InvoiceInput!
   }
   
-  input SalesOrderOpenInput {
-    CardCode: String!
-    IsCredit: Boolean
-    IsOpen: Boolean
-    Items: [ItemInput!]!
-  }
-  input SalesOrderUpdateInput {
-    CardCode: String
-    IsCredit: Boolean
-    IsOpen: Boolean
-    Items: [ItemInput!]
-  }
-  input OrderItemInput {
-    ItemCode: String!
-    Quantity: Int!
-    PriceList: Int!
-    BaseRef: DocNum!
-    BaseEntry: DocEntry!
-    BaseLine: Int!
-  }
-  input SalesOrderChargeInput {
-    CardCode: String!
-    Items: [OrderItemInput!]!
-    Invoice: InvoiceSplitInput
-    Invoices: [InvoiceSplitInput!]
-    IsCredit: Boolean
-    Payment: PaymentInput
-  }
-  input InvoiceSingleInput {
-    PaymentGroupCode: Int!
-    U_NIT: String!
-    U_RAZSOC: String!
-  }
-  input InvoiceSplitInput {
-    PaymentGroupCode: Int!
-    U_NIT: String!
-    U_RAZSOC: String!
-    ItemDistribution: [ItemDistributionInput!]!
-  }
-  input ItemDistributionInput {
-    ItemIndex: Int!
-    Quantity: Int!
-    PriceAfVAT: Float!
-  }
+  # input SalesOrderOpenInput {
+  #   CardCode: String!
+  #   IsCredit: Boolean
+  #   IsOpen: Boolean
+  #   Items: [ItemInput!]!
+  # }
+  # input SalesOrderUpdateInput {
+  #   CardCode: String
+  #   IsCredit: Boolean
+  #   IsOpen: Boolean
+  #   Items: [ItemInput!]
+  # }
+  # input OrderItemInput {
+  #   ItemCode: String!
+  #   Quantity: Int!
+  #   PriceList: Int!
+  #   BaseRef: DocNum!
+  #   BaseEntry: DocEntry!
+  #   BaseLine: Int!
+  # }
+  # input SalesOrderChargeInput {
+  #   CardCode: String!
+  #   Items: [OrderItemInput!]!
+  #   Invoice: InvoiceSplitInput
+  #   Invoices: [InvoiceSplitInput!]
+  #   IsCredit: Boolean
+  #   Payment: PaymentInput
+  # }
+  # input InvoiceSingleInput {
+  #   PaymentGroupCode: Int!
+  #   U_NIT: String!
+  #   U_RAZSOC: String!
+  # }
+  # input InvoiceSplitInput {
+  #   PaymentGroupCode: Int!
+  #   U_NIT: String!
+  #   U_RAZSOC: String!
+  #   ItemDistribution: [ItemDistributionInput!]!
+  # }
+  # input ItemDistributionInput {
+  #   ItemIndex: Int!
+  #   Quantity: Int!
+  #   PriceAfVAT: Float!
+  # }
 
   type Mutation {
     # rapid_sale: json
-    quick_sale (Sale: QuickSaleInput!): json
-    sales_order_open (Order: SalesOrderOpenInput!): json
-    sales_order_update (OrderID: DocEntry! Order:  SalesOrderUpdateInput!): json
-    sales_order_close (OrderID: DocEntry!): json
-    sales_order_reopen (OrderID: DocEntry!): json
-    sales_order_charge (OrderID: DocEntry! Sale: SalesOrderChargeInput!): json
+    quick_sale (Data: QuickSaleInput! Test: Boolean!): json
+    # sales_order_open (Order: SalesOrderOpenInput!): json
+    # sales_order_update (OrderID: DocEntry! Order:  SalesOrderUpdateInput!): json
+    # sales_order_close (OrderID: DocEntry!): json
+    # sales_order_reopen (OrderID: DocEntry!): json
+    # sales_order_charge (OrderID: DocEntry! Sale: SalesOrderChargeInput!): json
     # create_sale: json
     # create_order(order: OrderInput): Order!
     password_change (Credentials: CredentialsInput! NewPassword: String!): Boolean
@@ -130,20 +129,22 @@ const schema = buildSchema(/* GraphQL */`
   type Item {
     ItemCode: String!
     ItemName: String!
-    InventoryItem: String!
+    AllowManualPrice: Boolean!
+    AllowCredit: Boolean!
+    AllowAffiliate: Boolean!
     ItemPrices: [ItemPrice!]!
-    ItemWarehouseInfoCollection: [ItemWareHouse!]!
-  }
-
-  type ItemWareHouse {
-    WarehouseCode: String!
-    InStock: Float!
+    # ItemWarehouseInfoCollection: [ItemwareHouse!]!
   }
 
   type ItemPrice {
     PriceList: Int!
     Price: Float
-    Currency: String
+  }
+
+  type CreditCard {
+    CreditCardCode: Int!
+    CreditCardName: String!
+    GLAccount: String!
   }
 
   type PriceList {
@@ -151,34 +152,42 @@ const schema = buildSchema(/* GraphQL */`
     PriceListName: String!
   }
 
-  type Client {
+  type BusinessPartner {
     CardCode: String!
     CardName: String!
-    GroupCode: Int!
     CardForeignName: String!
     FederalTaxID: String!
     PayTermsGrpCode: Int!
+    Affiliate: Boolean!
+    VatLiable: Boolean!
     PriceListNum: Int!
     PriceList: PriceList!
   }
 
-  type ClientPagination {
+  type BusinessPartnerPagination {
     count: Int!
-    items: [Client!]!
+    items: [BusinessPartner!]!
+  }
+
+  type SalesPoint {
+    Code: String!
+    Name: String!
+    Catalog: [Item!]!
   }
 
   type Query {
-    # orders: [Order!]!
+    test: String
     session_employees(top: Int skip: Int): [Employee!]!
-    session_login (Credentials: CredentialsInput! SalesPointID: Int!): Auth!
+    session_login (Credentials: CredentialsInput! SalesPointCode: String!): Auth!
     session_logout: Boolean!
     session_refresh: Auth!
+    creditcard (CreditCardCode: Int!): CreditCard!
+    creditcards: [CreditCard!]!
     pricelist (PriceListNo: Int!): PriceList!
     pricelists: [PriceList!]!
-    client (CardCode: String!): Client!
-    clients (search: String offset: Int limit: Int): ClientPagination!
-    item_details (ItemCode: String!): Item!
-    items_details (ItemCodes: [String!]!): [Item!]!
+    business_partner (CardCode: String!): BusinessPartner!
+    business_partners (search: String offset: Int limit: Int): BusinessPartnerPagination!
+    salespoint (Code: String!): SalesPoint!
   }
 `)
 

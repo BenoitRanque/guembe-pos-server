@@ -1,6 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPoint" ADD COLUMN "CostingCode2" text
-  type: run_sql
-- args:
-    sql: ALTER TABLE "public"."SalesPoint" ALTER COLUMN "CostingCode2" DROP NOT NULL
-  type: run_sql

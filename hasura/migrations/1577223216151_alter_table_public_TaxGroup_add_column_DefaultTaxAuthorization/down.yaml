@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."TaxGroup" DROP COLUMN "DefaultTaxAuthorization";
-  type: run_sql

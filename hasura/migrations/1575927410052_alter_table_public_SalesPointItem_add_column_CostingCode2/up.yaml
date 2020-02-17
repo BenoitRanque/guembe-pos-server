@@ -1,3 +1,0 @@
-- args:
-    sql: ALTER TABLE "public"."SalesPointItem" ADD COLUMN "CostingCode2" text NULL;
-  type: run_sql
