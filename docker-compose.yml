@@ -9,8 +9,6 @@ services:
       args:
         NODE_ENV: production
     command: node src/index.js
-    expose:
-      - "8080"
     ports:
       - "4040:8080"
     restart: always
@@ -21,8 +19,29 @@ services:
       SAP_B1_USERNAME: ${SAP_B1_USERNAME}
       SAP_B1_PASSWORD: ${SAP_B1_PASSWORD}
       SAP_B1_COMPANY: ${SAP_B1_COMPANY}
-    # volumes:
-      # umcomment this in production, on a linux machine
-      # will make sure time stays synced between host and container
-      # - /etc/timezone:/etc/timezone:ro
-      # - /etc/localtime:/etc/localtime:ro
+      # volumes:
+        # umcomment this in production, on a linux machine
+        # will make sure time stays synced between host and container
+        # - /etc/timezone:/etc/timezone:ro
+        # - /etc/localtime:/etc/localtime:ro
+  zeus-staging:
+    image: zeus:prod
+    build:
+      context: .
+      dockerfile: ./zeus/Dockerfile
+      args:
+        NODE_ENV: production
+    command: node src/index.js
+    expose:
+      - "8080"
+    ports:
+      - "6060:8080"
+    restart: always
+    environment:
+      PORT: 8080
+      NODE_ENV: production
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      SAP_B1_USERNAME: ${SAP_B1_USERNAME}
+      SAP_B1_PASSWORD: ${SAP_B1_PASSWORD}
+      SAP_B1_COMPANY: ${SAP_B1_COMPANY}
+        
