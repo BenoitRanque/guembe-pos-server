@@ -15,7 +15,8 @@ module.exports = {
       Data
     }
 
-    const { data } = await sap.post('/script/test/guembe', payload)
+    const path = process.env.NODE_ENV === 'development' ? 'script/test/guembe' : '/script/Guembe/GPos'
+    const { data } = await sap.post(path, payload)
 
     return data
   }
