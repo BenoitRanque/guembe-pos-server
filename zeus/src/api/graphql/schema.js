@@ -176,7 +176,6 @@ const schema = buildSchema(/* GraphQL */`
   }
 
   type Query {
-    test: String
     session_employees(top: Int skip: Int): [Employee!]!
     session_login (Credentials: CredentialsInput!): Auth!
     session_logout: Boolean!
