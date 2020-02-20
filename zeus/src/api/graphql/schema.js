@@ -112,9 +112,64 @@ const schema = buildSchema(/* GraphQL */`
   #   PriceAfVAT: Float!
   # }
 
+  type Order {
+    Printer: String!
+    DocDate: Date!
+    SalesPersonCode: Int!
+    U_GPOS_Serial: Int!
+    U_GPOS_SalesPointCode: String!
+    Items: [OrderItem!]!
+  }
+  type OrderItem {
+    ItemCode: String!
+    ItemName: String!
+    Quantity: Int!
+  }
+
+  type Invoice {
+    DocDate: Date!
+    DocTime: String!
+    DocTotal: Float!
+    PaymentGroupCode: Int!
+    U_GPOS_Type: Int!
+    U_GPOS_Serial: Int!
+    U_GPOS_SalesPointCode: String!
+    Items: [InvoiceItem!]!
+    U_FECHALIM: Date
+    U_EXENTO: Float
+    U_ACTIVIDAD: String
+    U_LEYENDA: String
+    U_DIRECCION: String
+    U_CIUDAD: String
+    U_PAIS: String
+    U_SUCURSAL: String
+    U_NRO_FAC: Int
+    U_NROAUTOR: String
+    U_CODCTRL: String
+    U_NIT: String
+    U_RAZSOC: String
+  }
+
+  type InvoiceItem {
+    ItemCode: String!
+    ItemName: String!
+    Quantity: Int!
+    PriceAfterVAT: Float!
+  }
+
+  type SalePrint {
+    Orders: [Order!]
+    Invoices: [Invoice!]
+  }
+
+  type QuickSale {
+    Test: Boolean!
+    Print: SalePrint 
+  }
+
   type Mutation {
     # rapid_sale: json
-    quick_sale (Data: QuickSaleInput! Test: Boolean!): json
+    quick_sale (Data: QuickSaleInput! Test: Boolean!): QuickSale
     # sales_order_open (Order: SalesOrderOpenInput!): json
     # sales_order_update (OrderID: DocEntry! Order:  SalesOrderUpdateInput!): json
     # sales_order_close (OrderID: DocEntry!): json
