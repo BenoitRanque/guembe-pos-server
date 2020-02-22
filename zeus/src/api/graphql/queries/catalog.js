@@ -33,7 +33,8 @@ module.exports = {
           AllowManualPrice: ItemDetails.U_GPOS_AllowManualPrice === 1,
           AllowCredit: ItemDetails.U_GPOS_AllowCredit === 1,
           AllowAffiliate: ItemDetails.U_GPOS_AllowAffiliate === 1,
-          ItemPrices: ItemDetails.ItemPrices.map(({ PriceList, Price }) => ({ PriceList, Price }))
+          ItemPrices: ItemDetails.ItemPrices.map(({ PriceList, Price }) => ({ PriceList, Price })),
+          Tags: Item.U_Tags ? Item.U_Tags.split(/[^\w]/) : []
         }
       }))
     }

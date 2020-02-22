@@ -188,6 +188,7 @@ const schema = buildSchema(/* GraphQL */`
     AllowCredit: Boolean!
     AllowAffiliate: Boolean!
     ItemPrices: [ItemPrice!]!
+    Tags: [String!]!
     # ItemWarehouseInfoCollection: [ItemwareHouse!]!
   }
 
@@ -230,6 +231,32 @@ const schema = buildSchema(/* GraphQL */`
     Catalog: [Item!]!
   }
 
+  type SalesPagination {
+    count: Int!
+    items: [Sale!]!
+  }
+
+  type Sale {
+    DocEntry: Int!
+    DocNum: Int!
+    DocDate: Date!
+    DocTime: String!
+    DocTotal: Float!
+    SalesPersonCode: Int
+    U_GPOS_Type: Int!
+    U_GPOS_Serial: Int!
+    U_GPOS_SalesPointCode: String!
+    DocumentLines: [SaleItem!]!
+  }
+
+  type SaleItem {
+    LineNum: Int!
+    ItemCode: String!
+    ItemDescription: String!
+    Quantity: Int!
+    PriceAfterVAT: Float!
+  }
+
   type Query {
     session_employees(top: Int skip: Int): [Employee!]!
     session_login (Credentials: CredentialsInput!): Auth!
@@ -242,6 +269,8 @@ const schema = buildSchema(/* GraphQL */`
     business_partner (CardCode: String!): BusinessPartner!
     business_partners (search: String offset: Int limit: Int): BusinessPartnerPagination!
     salespoint (Code: String!): SalesPoint!
+    sales (top: Int skip: Int): SalesPagination!
+    sale (DocEntry: Int!): Sale!
   }
 `)
 
