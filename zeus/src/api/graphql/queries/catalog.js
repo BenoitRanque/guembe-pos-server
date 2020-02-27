@@ -5,7 +5,7 @@ async function getItemDetails(ItemCode) {
     // note: we may want to select ItemWarehouseInfoCollection if we want to be aware of stock levels
     const { data } = await sap.get(`/Items('${ItemCode}')`, {
       params: {
-        '$select': 'ItemCode,ItemName,ItemPrices,U_GPOS_AllowManualPrice,U_GPOS_AllowCredit,U_GPOS_AllowAffiliate'
+        '$select': 'ItemCode,ItemName,ItemPrices,U_GPOS_AllowManualPrice,U_GPOS_AllowCredit,U_GPOS_AllowAffiliate,U_GPOS_Tags'
       }
     })
     return data    
@@ -34,7 +34,7 @@ module.exports = {
           AllowCredit: ItemDetails.U_GPOS_AllowCredit === 1,
           AllowAffiliate: ItemDetails.U_GPOS_AllowAffiliate === 1,
           ItemPrices: ItemDetails.ItemPrices.map(({ PriceList, Price }) => ({ PriceList, Price })),
-          Tags: Item.U_Tags ? Item.U_Tags.split(/[^\w]/) : []
+          Tags: ItemDetails.U_GPOS_Tags ? ItemDetails.U_GPOS_Tags.split(/[^\w]+/) : []
         }
       }))
     }
