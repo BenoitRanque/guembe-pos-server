@@ -9,7 +9,7 @@ const {
 const { client: sap } = require('utils/sap')
 
 module.exports = {
-  async session_employees ({ top = null, skip = 0 }, ctx) {
+  async session_employees ({ limit = null, offset = 0 }, ctx) {
     const params = {
       '$expand': `SalesPerson`,
       '$select': `EmployeeID,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName`,
@@ -17,13 +17,13 @@ module.exports = {
       '$orderby': `LastName asc`
     }
     
-    const headers = {}
+    const headers = {
+      Prefer: 'odata.maxpagesize=0' 
+    }
     
-    if (top === null) {
-      headers['Prefer'] = 'odata.maxpagesize=0' 
-    } else {
-      params['$top'] = top
-      params['$skip'] = skip
+    if (limit !== null) {
+      params['$top'] = limit
+      params['$skip'] = offset
     }
     
     const { data: { value: employees } } = await sap.get('/EmployeesInfo', {

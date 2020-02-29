@@ -66,67 +66,21 @@ const schema = buildSchema(/* GraphQL */`
     Items: [ItemInput!]!
     Invoice: InvoiceInput!
   }
-  
-  # input SalesOrderOpenInput {
-  #   CardCode: String!
-  #   IsCredit: Boolean
-  #   IsOpen: Boolean
-  #   Items: [ItemInput!]!
-  # }
-  # input SalesOrderUpdateInput {
-  #   CardCode: String
-  #   IsCredit: Boolean
-  #   IsOpen: Boolean
-  #   Items: [ItemInput!]
-  # }
-  # input OrderItemInput {
-  #   ItemCode: String!
-  #   Quantity: Int!
-  #   PriceList: Int!
-  #   BaseRef: DocNum!
-  #   BaseEntry: DocEntry!
-  #   BaseLine: Int!
-  # }
-  # input SalesOrderChargeInput {
-  #   CardCode: String!
-  #   Items: [OrderItemInput!]!
-  #   Invoice: InvoiceSplitInput
-  #   Invoices: [InvoiceSplitInput!]
-  #   IsCredit: Boolean
-  #   Payment: PaymentInput
-  # }
-  # input InvoiceSingleInput {
-  #   PaymentGroupCode: Int!
-  #   U_NIT: String!
-  #   U_RAZSOC: String!
-  # }
-  # input InvoiceSplitInput {
-  #   PaymentGroupCode: Int!
-  #   U_NIT: String!
-  #   U_RAZSOC: String!
-  #   ItemDistribution: [ItemDistributionInput!]!
-  # }
-  # input ItemDistributionInput {
-  #   ItemIndex: Int!
-  #   Quantity: Int!
-  #   PriceAfVAT: Float!
-  # }
-
-  type Order {
+  type PrintOrder {
     Printer: String!
     DocDate: Date!
     SalesPersonCode: Int!
     U_GPOS_Serial: Int!
     U_GPOS_SalesPointCode: String!
-    Items: [OrderItem!]!
+    DocumentLines: [OrderItem!]!
   }
   type OrderItem {
     ItemCode: String!
-    ItemName: String!
+    ItemDescription: String!
     Quantity: Int!
   }
 
-  type Invoice {
+  type PrintInvoice {
     DocDate: Date!
     DocTime: String!
     DocTotal: Float!
@@ -134,7 +88,6 @@ const schema = buildSchema(/* GraphQL */`
     U_GPOS_Type: Int!
     U_GPOS_Serial: Int!
     U_GPOS_SalesPointCode: String!
-    Items: [InvoiceItem!]!
     U_FECHALIM: Date
     U_EXENTO: Float
     U_ACTIVIDAD: String
@@ -148,37 +101,59 @@ const schema = buildSchema(/* GraphQL */`
     U_CODCTRL: String
     U_NIT: String
     U_RAZSOC: String
+    DocumentLines: [InvoiceItem!]!
+  }
+
+  type Invoice {
+    DocEntry: Int!
+    DocNum: Int!
+    DocDate: Date!
+    CardCode: String!
+    CardName: String!
+    NumAtCard: String
+    DocTotal: Float
+    Comments: String
+    JournalMemo: String
+    PaymentGroupCode: Int!
+    DocTime: String
+    SalesPersonCode: Int
+    SalesPerson: SalesPerson
+    Cancelled: String
+    U_TIPODOC: Int
+    U_NIT: String
+    U_RAZSOC: String
+    U_CCFACANU: String
+    U_CODCTRL: String
+    U_NROAUTOR: String
+    U_ESTADOFC: String
+    U_NRO_FAC: String
+    U_GPOS_SalesPointCode: String
+    U_GPOS_Serial: Int
+    U_GPOS_Type: Int
+    DocumentLines: [InvoiceItem!]!
+  }
+
+  type SalesPerson {
+    SalesEmployeeCode: Int!
+    SalesEmployeeName: String!
+    EmployeeID: Int
   }
 
   type InvoiceItem {
     ItemCode: String!
-    ItemName: String!
+    ItemDescription: String!
     Quantity: Int!
     PriceAfterVAT: Float!
   }
 
   type SalePrint {
-    Orders: [Order!]
-    Invoices: [Invoice!]
+    Orders: [PrintOrder!]
+    Invoices: [PrintInvoice!]
   }
 
   type QuickSale {
     Test: Boolean!
     Print: SalePrint 
-  }
-
-  type Mutation {
-    # rapid_sale: json
-    quick_sale (Data: QuickSaleInput! Test: Boolean!): QuickSale
-    # sales_order_open (Order: SalesOrderOpenInput!): json
-    # sales_order_update (OrderID: DocEntry! Order:  SalesOrderUpdateInput!): json
-    # sales_order_close (OrderID: DocEntry!): json
-    # sales_order_reopen (OrderID: DocEntry!): json
-    # sales_order_charge (OrderID: DocEntry! Sale: SalesOrderChargeInput!): json
-    # create_sale: json
-    # create_order(order: OrderInput): Order!
-    password_change (Credentials: CredentialsInput! NewPassword: String!): Boolean
-    password_reset (SAPB1Credentials: SAPB1CredentialsInput! EmployeeID: Int! NewPassword: String): Boolean
   }
 
   type Item {
@@ -189,7 +164,6 @@ const schema = buildSchema(/* GraphQL */`
     AllowAffiliate: Boolean!
     ItemPrices: [ItemPrice!]!
     Tags: [String!]!
-    # ItemWarehouseInfoCollection: [ItemwareHouse!]!
   }
 
   type ItemPrice {
@@ -231,34 +205,13 @@ const schema = buildSchema(/* GraphQL */`
     Catalog: [Item!]!
   }
 
-  type SalesPagination {
+  type InvoicesPagination {
     count: Int!
-    items: [Sale!]!
-  }
-
-  type Sale {
-    DocEntry: Int!
-    DocNum: Int!
-    DocDate: Date!
-    DocTime: String!
-    DocTotal: Float!
-    SalesPersonCode: Int
-    U_GPOS_Type: Int!
-    U_GPOS_Serial: Int!
-    U_GPOS_SalesPointCode: String!
-    DocumentLines: [SaleItem!]!
-  }
-
-  type SaleItem {
-    LineNum: Int!
-    ItemCode: String!
-    ItemDescription: String!
-    Quantity: Int!
-    PriceAfterVAT: Float!
+    items: [Invoice!]!
   }
 
   type Query {
-    session_employees(top: Int skip: Int): [Employee!]!
+    session_employees(limit: Int offset: Int): [Employee!]!
     session_login (Credentials: CredentialsInput!): Auth!
     session_logout: Boolean!
     session_refresh: Auth!
@@ -269,8 +222,14 @@ const schema = buildSchema(/* GraphQL */`
     business_partner (CardCode: String!): BusinessPartner!
     business_partners (search: String offset: Int limit: Int): BusinessPartnerPagination!
     salespoint (Code: String!): SalesPoint!
-    sales (top: Int skip: Int): SalesPagination!
-    sale (DocEntry: Int!): Sale!
+    invoices (limit: Int offset: Int SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date!): InvoicesPagination!
+    invoice (DocEntry: Int!): Invoice
+  }
+
+  type Mutation {
+    quick_sale (Data: QuickSaleInput! Test: Boolean!): QuickSale
+    password_change (Credentials: CredentialsInput! NewPassword: String!): Boolean
+    password_reset (SAPB1Credentials: SAPB1CredentialsInput! EmployeeID: Int! NewPassword: String): Boolean
   }
 `)
 
