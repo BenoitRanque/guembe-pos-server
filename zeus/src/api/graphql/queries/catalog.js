@@ -1,42 +1,43 @@
 const { client: sap } = require('utils/sap')
 
-async function getItemDetails(ItemCode) {
-  try {
-    // note: we may want to select ItemWarehouseInfoCollection if we want to be aware of stock levels
-    const { data } = await sap.get(`/Items('${ItemCode}')`, {
-      params: {
-        '$select': 'ItemCode,ItemName,ItemPrices,U_GPOS_AllowManualPrice,U_GPOS_AllowCredit,U_GPOS_AllowAffiliate,U_GPOS_Tags'
-      }
-    })
-    return data    
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      error.message = `No se pudo encontrar el articulo ${ItemCode}`
-    }
-    throw error
-  } 
-}
-
 module.exports = {
-  async salespoint ({ Code }) {
-    const { data: SalesPoint } = await sap.get(`/GPosSalesPoint('${Code}')`)
+  async catalog ({ SalesPointCode }) {
+
+    const path = `script/${process.env.NODE_ENV === 'development' ? 'test' : 'Guembe'}/GPos('${SalesPointCode}')`
+    const { data: { Catalog } } = await sap.get(path)
+
+    return Catalog
+  },
+  async salespoints ({ limit = null, offset = 0 }, ctx) {
+    const params = {
+      '$orderby': `Name asc`
+    }
+
+    const headers = {
+      Prefer: 'odata.maxpagesize=0' 
+    }
+
+    if (limit !== null) {
+      params['$top'] = limit
+      params['$skip'] = offset
+    }
+
+    const { data: { value: salespoints } } = await sap.get('/GPosSalesPoint', {
+      params,
+      headers
+    })
+
+    return salespoints.map(salespoint => ({
+      Code: salespoint.Code,
+      Name: salespoint.Name
+    }))
+  },
+  async salespoint ({ Code }, ctx) {
+    const { data: salespoint } = await sap.get(`/GPosSalesPoint('${Code}')`)
 
     return {
-      Code: SalesPoint.Code,
-      Name: SalesPoint.Name,
-      Catalog: await Promise.all(SalesPoint.GPOS_SALESITEMCollection.map(async Item => {
-        const ItemDetails = await getItemDetails(Item.U_ItemCode)
-
-        return {
-          ItemCode: ItemDetails.ItemCode,
-          ItemName: ItemDetails.ItemName,
-          AllowManualPrice: ItemDetails.U_GPOS_AllowManualPrice === 1,
-          AllowCredit: ItemDetails.U_GPOS_AllowCredit === 1,
-          AllowAffiliate: ItemDetails.U_GPOS_AllowAffiliate === 1,
-          ItemPrices: ItemDetails.ItemPrices.map(({ PriceList, Price }) => ({ PriceList, Price })),
-          Tags: ItemDetails.U_GPOS_Tags ? ItemDetails.U_GPOS_Tags.split(/[^\w]+/) : []
-        }
-      }))
+      Code: salespoint.Code,
+      Name: salespoint.Name
     }
   },
   async creditcard ({ CreditCardCode }) {

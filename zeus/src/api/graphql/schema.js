@@ -202,7 +202,6 @@ const schema = buildSchema(/* GraphQL */`
   type SalesPoint {
     Code: String!
     Name: String!
-    Catalog: [Item!]!
   }
 
   type InvoicesPagination {
@@ -212,6 +211,7 @@ const schema = buildSchema(/* GraphQL */`
 
   type Query {
     session_employees(limit: Int offset: Int): [Employee!]!
+    session_employee(EmployeeID: Int!): [Employee!]!
     session_login (Credentials: CredentialsInput!): Auth!
     session_logout: Boolean!
     session_refresh: Auth!
@@ -221,9 +221,12 @@ const schema = buildSchema(/* GraphQL */`
     pricelists: [PriceList!]!
     business_partner (CardCode: String!): BusinessPartner!
     business_partners (search: String offset: Int limit: Int): BusinessPartnerPagination!
+    salespoints (limit: Int offset: Int): [SalesPoint!]!
     salespoint (Code: String!): SalesPoint!
     invoices (limit: Int offset: Int SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date!): InvoicesPagination!
-    invoice (DocEntry: Int!): Invoice
+    invoice (DocEntry: Int!): Invoice!
+    print_invoice (DocEntry: Int!): PrintInvoice!
+    catalog (SalesPointCode: String!): [Item!]!
   }
 
   type Mutation {

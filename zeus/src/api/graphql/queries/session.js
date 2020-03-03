@@ -9,6 +9,19 @@ const {
 const { client: sap } = require('utils/sap')
 
 module.exports = {
+  async session_employee ({ EmployeeID }, ctx) {
+    const { data } = await sap.get(`/EmployeeInfo(${EmployeeID})`, {
+      params: {
+        '$expand': 'SalesPerson',
+        '$select': `EmployeeID,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName`,
+      }
+    })
+
+    return {
+      ...data,
+      ...data.SalesPerson
+    }
+  },
   async session_employees ({ limit = null, offset = 0 }, ctx) {
     const params = {
       '$expand': `SalesPerson`,

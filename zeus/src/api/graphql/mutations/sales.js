@@ -15,8 +15,6 @@ module.exports = {
       Data
     }
 
-    console.log('processing sale', payload, payload.Data.Items)
-
     const path = `script/${process.env.NODE_ENV === 'development' ? 'test' : 'Guembe'}/GPos`
     const { data } = await sap.post(path, payload)
 
