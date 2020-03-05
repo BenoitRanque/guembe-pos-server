@@ -11,6 +11,7 @@ module.exports = {
         '$select': 'DocEntry,DocNum,DocDate,CardCode,CardName,NumAtCard,DocTotal,Comments,JournalMemo,PaymentGroupCode,DocTime,SalesPersonCode,SalesPerson,Cancelled,U_TIPODOC,U_NIT,U_RAZSOC,U_CCFACANU,U_CODCTRL,U_NROAUTOR,U_ESTADOFC,U_NRO_FAC,U_GPOS_SalesPointCode,U_GPOS_Serial,U_GPOS_Type,DocumentLines,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName,SalesPerson/EmployeeID',
         '$expand': 'SalesPerson',
         '$filter': [
+          `CancelStatus ne 'csCancellation'`,
           'U_GPOS_Type ne 0',
           SalesPersonCode ? `SalesPersonCode eq ${SalesPersonCode}` : null,
           SalesPointCode ? `U_GPOS_SalesPointCode eq '${SalesPointCode}'` : null,
