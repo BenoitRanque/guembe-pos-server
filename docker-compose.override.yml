@@ -9,6 +9,5 @@ services:
     environment:
       NODE_ENV: development
     volumes:
-      - ./zeus/src:/usr/app/src
-      - ./node_modules:/usr/app/src/node_modules
+      - ./zeus/src:/home/node/app/src
       

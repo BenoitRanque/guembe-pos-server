@@ -8,34 +8,18 @@ const schema = buildSchema(/* GraphQL */`
   scalar DocEntry
   scalar DocNum
 
-  type Employee {
-    EmployeeID: Int!
-    SalesEmployeeCode: Int
-    SalesEmployeeName: String
-  }
-
   type Session {
-    EmployeeID: Int!
-    SalesEmployeeCode: Int!
-    SalesEmployeeName: String
-    Roles: [String!]!
+    Token: String!
+    Employee: Employee!
   }
-
-  type Auth {
-    token: String!
-    session: Session!
-  }
-
   input CredentialsInput {
     EmployeeID: Int!
     Password: String!
   }
-
   input SAPB1CredentialsInput {
     UserName: String!
     Password: String!
   }
-
   input ItemInput {
     ItemCode: String!
     Quantity: Int!
@@ -66,44 +50,41 @@ const schema = buildSchema(/* GraphQL */`
     Items: [ItemInput!]!
     Invoice: InvoiceInput!
   }
+
+  type QuickSale {
+    Test: Boolean!
+    Print: SalePrint 
+  }
+  type SalePrint {
+    Orders: [PrintOrder!]
+    Invoices: [Invoice!]
+  }
   type PrintOrder {
     Printer: String!
     DocDate: Date!
     SalesPersonCode: Int!
     U_GPOS_Serial: Int!
     U_GPOS_SalesPointCode: String!
-    DocumentLines: [OrderItem!]!
+    DocumentLines: [ItemLine!]!
   }
-  type OrderItem {
+  type ItemLine {
     ItemCode: String!
     ItemDescription: String!
     Quantity: Int!
+    PriceAfterVAT: Float!
   }
-
-  type PrintInvoice {
-    DocDate: Date!
-    DocTime: String!
-    DocTotal: Float!
-    PaymentGroupCode: Int!
-    U_GPOS_Type: Int!
-    U_GPOS_Serial: Int!
-    U_GPOS_SalesPointCode: String!
-    U_FECHALIM: Date
-    U_EXENTO: Float
+  type TaxSeries {
     U_ACTIVIDAD: String
     U_LEYENDA: String
     U_DIRECCION: String
     U_CIUDAD: String
     U_PAIS: String
     U_SUCURSAL: String
-    U_NRO_FAC: Int
-    U_NROAUTOR: String
-    U_CODCTRL: String
-    U_NIT: String
-    U_RAZSOC: String
-    DocumentLines: [InvoiceItem!]!
   }
-
+  type InvoicePagination {
+    totalItems: Int!
+    pageItems: [Invoice!]!
+  }
   type Invoice {
     DocEntry: Int!
     DocNum: Int!
@@ -116,8 +97,6 @@ const schema = buildSchema(/* GraphQL */`
     JournalMemo: String
     PaymentGroupCode: Int!
     DocTime: String
-    SalesPersonCode: Int
-    SalesPerson: SalesPerson
     Cancelled: String
     U_TIPODOC: Int
     U_NIT: String
@@ -130,58 +109,41 @@ const schema = buildSchema(/* GraphQL */`
     U_GPOS_SalesPointCode: String
     U_GPOS_Serial: Int
     U_GPOS_Type: Int
-    DocumentLines: [InvoiceItem!]!
+    U_GPOS_TaxSeriesCode: String
+    DocumentLines: [ItemLine!]!
+    SalesPerson: SalesPerson
+    TaxSeries: TaxSeries
   }
-
+  enum InvoiceCodeTypeEnum {
+    DocEntry
+    DocNum
+  }
+  type EmployeePagination {
+    totalItems: Int!
+    pageItems: [Employee!]!
+  }
+  type Employee {
+    EmployeeID: Int!
+    SalesPerson: SalesPerson
+    Roles: [String!]!
+  }
   type SalesPerson {
-    SalesEmployeeCode: Int!
-    SalesEmployeeName: String!
-    EmployeeID: Int
+    SalesPersonCode: Int!
+    SalesPersonName: String
+    Employee: Employee
   }
-
-  type InvoiceItem {
-    ItemCode: String!
-    ItemDescription: String!
-    Quantity: Int!
-    PriceAfterVAT: Float!
+  type CreditCardPagination {
+    totalItems: Int!
+    pageItems: [CreditCard!]!
   }
-
-  type SalePrint {
-    Orders: [PrintOrder!]
-    Invoices: [PrintInvoice!]
-  }
-
-  type QuickSale {
-    Test: Boolean!
-    Print: SalePrint 
-  }
-
-  type Item {
-    ItemCode: String!
-    ItemName: String!
-    AllowManualPrice: Boolean!
-    AllowCredit: Boolean!
-    AllowAffiliate: Boolean!
-    ItemPrices: [ItemPrice!]!
-    Tags: [String!]!
-  }
-
-  type ItemPrice {
-    PriceList: Int!
-    Price: Float
-  }
-
   type CreditCard {
-    CreditCardCode: Int!
-    CreditCardName: String!
-    GLAccount: String!
+    CreditCard: Int!
+    CardName: String!
   }
-
-  type PriceList {
-    PriceListNo: Int!
-    PriceListName: String!
+  type BusinessPartnerPagination {
+    totalItems: Int!
+    pageItems: [BusinessPartner!]!
   }
-
   type BusinessPartner {
     CardCode: String!
     CardName: String!
@@ -190,43 +152,58 @@ const schema = buildSchema(/* GraphQL */`
     PayTermsGrpCode: Int!
     Affiliate: Boolean!
     VatLiable: Boolean!
-    PriceListNum: Int!
-    PriceList: PriceList!
+    PrimaryPriceList: Int!
+    PrimaryPriceListName: String!
+    SecondaryPriceList: Int!
+    SecondaryPriceListName: String!
   }
-
-  type BusinessPartnerPagination {
-    count: Int!
-    items: [BusinessPartner!]!
+  enum BusinessPartnerCodeTypeEnum {
+    CardCode
+    FederalTaxID
   }
-
+  type SalesPointPagination {
+    totalItems: Int!
+    pageItems: [SalesPoint!]!
+  }
   type SalesPoint {
     Code: String!
     Name: String!
   }
-
-  type InvoicesPagination {
-    count: Int!
-    items: [Invoice!]!
+  type ItemPagination {
+    totalItems: Int!
+    pageItems: [Item!]!
+  }
+  type Item {
+    ItemCode: String!
+    ItemName: String!
+    AllowManualPrice: Boolean!
+    AllowCredit: Boolean!
+    AllowAffiliate: Boolean!
+    PrimaryPrice: Float
+    SecondaryPrice: Float
+    Stock: Float
+  }
+  enum ItemCodeTypeEnum {
+    ItemCode
+    BarCode
   }
 
   type Query {
-    session_employees(limit: Int offset: Int): [Employee!]!
-    session_employee(EmployeeID: Int!): [Employee!]!
-    session_login (Credentials: CredentialsInput!): Auth!
+    session_login (Credentials: CredentialsInput!): Session!
     session_logout: Boolean!
-    session_refresh: Auth!
-    creditcard (CreditCardCode: Int!): CreditCard!
-    creditcards: [CreditCard!]!
-    pricelist (PriceListNo: Int!): PriceList!
-    pricelists: [PriceList!]!
-    business_partner (CardCode: String!): BusinessPartner!
-    business_partners (search: String offset: Int limit: Int): BusinessPartnerPagination!
-    salespoints (limit: Int offset: Int): [SalesPoint!]!
-    salespoint (Code: String!): SalesPoint!
-    invoices (limit: Int offset: Int SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date!): InvoicesPagination!
+    session_refresh: Session!
+    invoices (limit: Int offset: Int filter: String SalesPointCode: String SalesPerson: Int FromDate: Date! ToDate: Date): InvoicePagination
     invoice (DocEntry: Int!): Invoice!
-    print_invoice (DocEntry: Int!): PrintInvoice!
-    catalog (SalesPointCode: String!): [Item!]!
+    employees (limit: Int offset: Int showUnset: Boolean): EmployeePagination!
+    employee (EmployeeID: Int!): Employee
+    creditcards (limit: Int offset: Int): CreditCardPagination!
+    creditcard (CreditCard: Int!): CreditCard
+    salespoints (limit: Int offset: Int): SalesPointPagination!
+    salespoint (Code: String!): SalesPoint
+    business_partners (limit: Int offset: Int filter: String): BusinessPartnerPagination!
+    business_partner (Code: String CodeType: BusinessPartnerCodeTypeEnum): BusinessPartner
+    items (limit: Int offset: Int filter: String SalesPointCode: String! PrimaryPriceList: Int! SecondaryPriceList: Int!): ItemPagination!
+    item (Code: String! CodeType: ItemCodeTypeEnum SalesPointCode: String! PrimaryPriceList: Int! SecondaryPriceList: Int!): Item
   }
 
   type Mutation {

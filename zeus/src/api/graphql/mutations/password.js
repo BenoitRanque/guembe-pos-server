@@ -1,31 +1,28 @@
 const bcrypt = require('bcryptjs')
-const axios = require('axios')
-const { sapCredentials, clientOptions, getCookieHeader, getSAPSessionCookies, client: sap } = require('utils/sap')
-const { authenticateEmployee } = require('utils/session')
-
+const { authenticateEmployee } = require('../../../utils/session')
+const { ServiceLayerClient } = require('../../../utils/sap/ServiceLayer')
 module.exports = {
-  async password_change ({ Credentials: { EmployeeID = null, Password = '' }, NewPassword }) {
-    await authenticateEmployee({ EmployeeID, Password })
+  async password_change ({ Credentials: { EmployeeID = null, Password = '' }, NewPassword }, { sap }) {
+    await authenticateEmployee({ EmployeeID, Password }, sap)
     
-    await sap.patch(`/EmployeesInfo(${EmployeeID})`, {
+    await sap.serviceLayer.patch(`/EmployeesInfo(${EmployeeID})`, {
       U_GPOS_Password: await bcrypt.hash(NewPassword, 12)
     })
 
     return true
   },
-  async password_reset ({ SAPB1Credentials, EmployeeID, NewPassword }) {
-    const cookies = await getSAPSessionCookies({
-      CompanyDB: sapCredentials.CompanyDB,
-      UserName: SAPB1Credentials.UserName,
-      Password: SAPB1Credentials.Password
+  async password_reset ({ SAPB1Credentials, EmployeeID, NewPassword }, ctx) {
+
+    const serviceLayer = new ServiceLayerClient({
+      credentials: {
+        ...ServiceLayerClient.defaultCredentials,
+        UserName: SAPB1Credentials.UserName,
+        Password: SAPB1Credentials.Password
+      }
     })
 
-    await axios.create(clientOptions).patch(`/EmployeesInfo(${EmployeeID})`, {
+    await serviceLayer.patch(`/EmployeesInfo(${EmployeeID})`, {
       U_GPOS_Password: await bcrypt.hash(NewPassword, 12)
-    }, {
-      headers: {
-        'Cookie': getCookieHeader(cookies)
-      }
     })
 
     return true

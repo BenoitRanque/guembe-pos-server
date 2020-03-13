@@ -1,6 +1,6 @@
-const { requireSession } = require('utils/session')
-const { BadRequestError } = require('utils/errors')
-const { client: sap } = require('utils/sap')
+const { requireSession } = require('../../../utils/session')
+const { BadRequestError } = require('../../../utils/errors')
+const { client: sap } = require('../../../utils/sapServiceLayer')
 
 module.exports = {
   async quick_sale ({ Data, Test }, { req }) {

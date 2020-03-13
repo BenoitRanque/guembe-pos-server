@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
-const { client: sap } = require('utils/sap')
-const { UnauthorizedError } = require('utils/errors')
+// const { client: sap } = require('./sap/ServiceLayer')
+const { UnauthorizedError } = require('./errors')
+const { getEmployeeFromSalesPersonCode } = require('./employee')
 
 const ONE_MONTH = 30 * 24 * 60 * 60 * 1000
 const refreshCookieOptions = {
@@ -14,41 +15,42 @@ const ROLE_WHITELIST = [
   'cajeros'
 ]
 
-async function authenticateEmployee ({ EmployeeID, Password }) {
-  const { data: employee } = await sap.get(`/EmployeesInfo(${EmployeeID})`, {
-    params: {
-      '$expand': `SalesPerson`,
-      '$select': `EmployeeID,Active,U_GPOS_Password,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName,SalesPerson/Active`
-    }
-  })
+async function authenticateEmployee ({ EmployeeID, Password }, sap) {
+  const hana = await sap.hana
 
-  if (!employee.SalesPerson) {
-    throw new Error(`Empleado de venta no configurado`)
+  const [ employee ] = await hana.execute(/*sql*/`
+    SELECT
+      T0."empID" AS "EmployeeID",
+      T1."SlpCode" AS "SalesPersonCode",
+      T1."SlpName" AS "SalesPersonName",
+      T0."U_GPOS_Password" AS "Password"
+    FROM OHEM T0
+    INNER JOIN OSLP T1 ON T1."SlpCode" = T0."salesPrson" AND T1."SlpCode" > 1
+    WHERE T0."empID" = ?
+    AND T0."Active" = 'Y'
+    AND T1."Active" = 'Y'
+    LIMIT 1 
+  `, [
+    EmployeeID
+  ])
+
+  if (!employee) {
+    throw new Error(`Empleado no encontrado, inactivo, o no tiene empleado de venta valido`)
   }
 
-  if (employee.SalesPerson.SalesEmployeeCode <= 1) {
-    throw new Error(`Empleado de venta invalido: ${employee.SalesPerson.SalesEmployeeCode} ${employee.SalesPerson.SalesEmployeeName}. No se permiten empleados de venta con codigo menor a 2`)
-  }
-  
-  if (employee.Active !== 'tYES') {
-    throw new Error(`Empleado inactivo`)
-  }
-  
-  if (employee.SalesPerson.Active !== 'tYES') {
-    throw new Error(`Empleado de venta inactivo`)
-  }
-
-  if (!employee.U_GPOS_Password) {
+  if (!employee.Password) {
     throw new Error(`Para poder inciar session primero establesca contraseña para el usuario ${EmployeeID}`)
   }
 
-  const valid = await bcrypt.compare(Password, employee.U_GPOS_Password)
+  const valid = await bcrypt.compare(Password, employee.Password)
   if (valid) {
-    const { EmployeeID, SalesPerson: { SalesEmployeeCode, SalesEmployeeName } } = employee
+    const { EmployeeID, SalesPersonCode, SalesPersonName } = employee
     return {
       EmployeeID,
-      SalesEmployeeCode,
-      SalesEmployeeName
+      SalesPerson: {
+        SalesPersonCode,
+        SalesPersonName
+      }
     }
   }
 
@@ -74,8 +76,6 @@ function encodeAuthToken(payload) {
 function decodeToken(token) {
   const { ses } = jwt.verify(token, process.env.AUTH_JWT_SECRET)
   return ses
-  // const { ses } = await jwt.verify(token, process.env.AUTH_JWT_SECRET)
-  // return ses
 }
 function parseSession (req) {
   const authorization = req.get('Authorization')

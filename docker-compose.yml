@@ -8,6 +8,7 @@ services:
       dockerfile: ./zeus/Dockerfile
       args:
         NODE_ENV: production
+        # DBCAPI_API_DLL: /usr/app/node_modules/@sap/hana-client/prebuilt/linuxx86_64-gcc48/libdbcapiHDB.so
     command: node src/index.js
     ports:
       - "4040:8080"
@@ -19,29 +20,15 @@ services:
       SAP_B1_USERNAME: ${SAP_B1_USERNAME}
       SAP_B1_PASSWORD: ${SAP_B1_PASSWORD}
       SAP_B1_COMPANY: ${SAP_B1_COMPANY}
+      SAP_HANA_HOSTNAME: ${SAP_HANA_HOSTNAME}
+      SAP_HANA_PORT: ${SAP_HANA_PORT}
+      SAP_HANA_DATABASE: ${SAP_HANA_DATABASE}
+      SAP_HANA_USERNAME: ${SAP_HANA_USERNAME}
+      SAP_HANA_PASSWORD: ${SAP_HANA_PASSWORD}
       # volumes:
         # umcomment this in production, on a linux machine
         # will make sure time stays synced between host and container
         # - /etc/timezone:/etc/timezone:ro
         # - /etc/localtime:/etc/localtime:ro
-  zeus-staging:
-    image: zeus:prod
-    build:
-      context: .
-      dockerfile: ./zeus/Dockerfile
-      args:
-        NODE_ENV: production
-    command: node src/index.js
-    expose:
-      - "8080"
-    ports:
-      - "6060:8080"
-    restart: always
-    environment:
-      PORT: 8080
-      NODE_ENV: production
-      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
-      SAP_B1_USERNAME: ${SAP_B1_USERNAME}
-      SAP_B1_PASSWORD: ${SAP_B1_PASSWORD}
-      SAP_B1_COMPANY: ${SAP_B1_COMPANY}
+
         

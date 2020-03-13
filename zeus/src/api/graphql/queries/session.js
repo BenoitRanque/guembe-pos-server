@@ -1,92 +1,59 @@
 const {
   refreshCookieOptions,
   authenticateEmployee,
-  getEmployeeRoles,
   encodeRefreshToken,
   encodeAuthToken,
   decodeToken
-} = require('utils/session')
-const { client: sap } = require('utils/sap')
+} = require('../../../utils/session')
+const {
+  getEmployeeRoles,
+  getEmployeeFromSalesPersonCode
+} = require('../../../utils/employee')
 
 module.exports = {
-  async session_employee ({ EmployeeID }, ctx) {
-    const { data } = await sap.get(`/EmployeeInfo(${EmployeeID})`, {
-      params: {
-        '$expand': 'SalesPerson',
-        '$select': `EmployeeID,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName`,
+  async session_login ({ Credentials: { EmployeeID = null, Password = '' } }, { res, sap }) {  
+    const Employee = await authenticateEmployee({ EmployeeID, Password }, sap)
+    
+    res.cookie('refresh-token', encodeRefreshToken(Employee), refreshCookieOptions)
+    
+    return {
+      Token: encodeAuthToken(Employee),
+      Employee: {
+        ...Employee,
+        SalesPerson: {
+          ...Employee.SalesPerson,
+          Employee: getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
+        },
+        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
       }
-    })
-
-    return {
-      ...data,
-      ...data.SalesPerson
-    }
-  },
-  async session_employees ({ limit = null, offset = 0 }, ctx) {
-    const params = {
-      '$expand': `SalesPerson`,
-      '$select': `EmployeeID,SalesPerson/SalesEmployeeCode,SalesPerson/SalesEmployeeName`,
-      '$filter': `Active eq 'tYES' and not U_GPOS_Password eq null and not SalesPersonCode eq null`,
-      '$orderby': `LastName asc`
-    }
-    
-    const headers = {
-      Prefer: 'odata.maxpagesize=0' 
-    }
-    
-    if (limit !== null) {
-      params['$top'] = limit
-      params['$skip'] = offset
-    }
-    
-    const { data: { value: employees } } = await sap.get('/EmployeesInfo', {
-      params,
-      headers
-    })
-
-    return employees.map(employee => ({
-      ...employee,
-      ...employee.SalesPerson
-    }))
-  },
-  async session_login ({ Credentials: { EmployeeID = null, Password = '' } }, { res }) {  
-    const employee = await authenticateEmployee({ EmployeeID, Password })
-    
-    const session = {
-      ...employee,
-      Roles: await getEmployeeRoles({ EmployeeID })
-    }
-
-    res.cookie('refresh-token', encodeRefreshToken(employee), refreshCookieOptions)
-
-    return {
-      session,
-      token: encodeAuthToken(session)
     }
   },
   async session_logout (args, { res }) {
     res.clearCookie('refresh-token')
     return true
   },
-  async session_refresh (args, { req, res }) {
+  async session_refresh (args, { req, res, sap }) {
     const token = req.cookies['refresh-token']
 
     if (!token) {
       throw new Error('No refresh token')
     }
 
-    const employee = await decodeToken(token)
+    const Employee = await decodeToken(token)
 
-    const session = {
-      ...employee,
-      Roles: await getEmployeeRoles(employee)
-    }
-
-    res.cookie('refresh-token', encodeRefreshToken(employee), refreshCookieOptions)
+    res.cookie('refresh-token', encodeRefreshToken(Employee), refreshCookieOptions)
 
     return {
-      session,
-      token: encodeAuthToken(session)
+      Token: encodeAuthToken(Employee),
+      Employee: {
+        ...Employee,
+        SalesPerson: {
+          ...Employee.SalesPerson,
+          Employee: getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
+        },
+        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
+      }
     }
   }
 }
+

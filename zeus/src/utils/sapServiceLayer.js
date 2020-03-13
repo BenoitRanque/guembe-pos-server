@@ -10,7 +10,7 @@ const sapCredentials = {
 
 const clientOptions = {
   timeout: 1000 * 60 * 5, // 5 minutes
-  baseURL: 'https://192.168.0.2:50000/b1s/v1',
+  baseURL: `https://${process.env.SAP_HANA_HOSTNAME}:50000/b1s/v1`,
   headers: {
     'Content-Type': 'application/json'
   },
@@ -68,9 +68,6 @@ client.interceptors.request.use(async request => {
     return Promise.reject(error)
 })
 
-function getProp(obj, path) {
-    return path.split('.').reduce((obj, prop) => obj[prop] ? obj[prop] : null, obj)
-}
 client.interceptors.response.use(async response => {
     session.cookies = {
         ...session.cookies,
@@ -90,13 +87,8 @@ createAuthRefreshInterceptor(client, async failedRequest => {
     return failedRequest
 })
 
-function formatDate(date) {
-    return date.getFullYear() + `00${date.getMonth()}`.slice(-2) + `00${date.getDate()}`.slice(-2)
-}
-
 module.exports = {
     client,
-    formatDate,
     sapCredentials,
     clientOptions,
     readSetCookieHeader,

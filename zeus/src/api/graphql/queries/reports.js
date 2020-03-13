@@ -1,4 +1,4 @@
-const { client: sap } = require('utils/sap')
+const { client: sap } = require('../../../utils/sapServiceLayer')
 
 module.exports = {
   // TODO!
