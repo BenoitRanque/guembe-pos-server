@@ -9,11 +9,6 @@ const refreshCookieOptions = {
   httpOnly: true,
   maxAge: ONE_MONTH
 }
-const ROLE_WHITELIST = [
-  'administrador',
-  'meseros',
-  'cajeros'
-]
 
 async function authenticateEmployee ({ EmployeeID, Password }, sap) {
   const hana = await sap.hana
@@ -56,17 +51,6 @@ async function authenticateEmployee ({ EmployeeID, Password }, sap) {
 
   throw new Error('Error de Autenticación')
 }
-async function getEmployeeRoles ({ EmployeeID }) {
-  const { data: { EmployeeRolesInfoLines: employeeRoles } } = await sap.get(`/EmployeesInfo(${EmployeeID})/EmployeeRolesInfoLines`)
-  const { data: { value: roles } } = await sap.get('/EmployeeRolesSetup')
-
-  const Roles = roles
-    .filter(({ TypeID, Name }) => employeeRoles.some(({ RoleID }) => RoleID === TypeID))
-    .map(({ Name }) => Name.toLowerCase())
-    .filter(role => ROLE_WHITELIST.includes(role))
-
-  return Roles
-}
 function encodeRefreshToken(payload) {
   return jwt.sign({ ses: payload }, process.env.AUTH_JWT_SECRET, { expiresIn: '30 days' })
 }
@@ -103,7 +87,6 @@ module.exports = {
   parseSession,
   refreshCookieOptions,
   authenticateEmployee,
-  getEmployeeRoles,
   encodeAuthToken,
   encodeRefreshToken,
   decodeToken

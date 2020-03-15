@@ -50,14 +50,14 @@ module.exports = {
       }
     })
 
-    const { data: TaxSeries } = await sap.get(`U_LB_CDC_DOS('${Invoice.U_GPOS_TaxSeriesCode}')`, {
+    const { data: TaxSerie } = await sap.get(`U_LB_CDC_DOS('${Invoice.U_GPOS_TaxSeriesCode}')`, {
       params: {
         '$select': 'U_ACTIVIDAD,U_LEYENDA,U_DIRECCION,U_CIUDAD,U_PAIS,U_SUCURSAL'
       }
     }) 
 
     return {
-      ...TaxSeries,
+      ...TaxSerie,
       ...Invoice
     }
   }

@@ -1,3 +1,8 @@
+const ROLE_WHITELIST = [
+  'administrador',
+  'meseros',
+  'cajeros'
+]
 
 function getSalesPerson (SalesPersonCode, sap) {
   return async () => {
@@ -65,7 +70,9 @@ function getEmployeeRoles(EmployeeID, sap) {
       WHERE T0."empID" = ?
     `, [ EmployeeID ])
 
-    return roles.map(({ name }) => name)
+    return roles
+      .map(({ name }) => name.toLowerCase())
+      .filter(role => ROLE_WHITELIST.includes(role))
   } 
 }
 

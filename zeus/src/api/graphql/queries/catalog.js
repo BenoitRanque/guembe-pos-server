@@ -14,10 +14,10 @@ function getInvoiceDocumentLines (DocEntry, sap) {
     `, [ DocEntry ])
   }
 }
-function getInvoiceTaxSeries (TaxSeriesCode, sap) {
+function getInvoiceTaxSerie (TaxSerieCode, sap) {
   return async () => {
     const hana = await sap.hana
-    const [ TaxSeries ] = await hana.execute(/*sql*/`
+    const [ TaxSerie ] = await hana.execute(/*sql*/`
       SELECT
         T0."U_ACTIVIDAD",
         T0."U_LEYENDA",
@@ -25,11 +25,11 @@ function getInvoiceTaxSeries (TaxSeriesCode, sap) {
         T0."U_CIUDAD",
         T0."U_PAIS",
         T0."U_SUCURSAL"
-      FROM U_LB_CDC_DOS T0
+      FROM "@LB_CDC_DOS" T0
       WHERE T0."Code" = ?
       LIMIT 1
-    `, [ TaxSeriesCode ])
-    return TaxSeries
+    `, [ TaxSerieCode ])
+    return TaxSerie
   }
 }
 
@@ -49,7 +49,8 @@ module.exports = {
       hana.execute(/*sql*/`
         SELECT
           T0."empID" AS "EmployeeID",
-          T0."salesPrson" AS "SalesPersonCode"
+          T0."salesPrson" AS "SalesPersonCode",
+          T1."SlpName" AS "SalesPersonName"
         FROM OHEM T0
         LEFT JOIN OSLP T1 ON T1."SlpCode" = T0."salesPrson" 
         WHERE T0."Active" = 'Y'
@@ -64,8 +65,11 @@ module.exports = {
       totalItems: count,
       pageItems: Employees.map(Employee => ({
         ...Employee,
-        Roles: getEmployeeRoles(Employee.EmployeeID, sap),
-        SalesPerson: getSalesPerson(Employee.SalesPersonCode, sap)
+        SalesPerson: {
+          ...Employee,
+          Employee: getEmployeeFromEmployeeID(Employee.EmployeeID, sap)
+        },
+        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
       }))
     }
   },
@@ -85,7 +89,7 @@ module.exports = {
         T0."Comments",
         T0."JrnlMemo" AS "JournalMemo",
         T0."GroupNum" AS "PaymentGroupCode",
-        T0."CANCELLED" AS "Cancelled",
+        CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
         T0."U_TIPODOC",
         T0."U_NIT",
         T0."U_RAZSOC",
@@ -94,6 +98,8 @@ module.exports = {
         T0."U_NROAUTOR",
         T0."U_ESTADOFC",
         T0."U_NRO_FAC",
+        T0."U_FECHALIM",
+        T0."U_EXENTO",
         T0."U_GPOS_SalesPointCode",
         T0."U_GPOS_Serial",
         T0."U_GPOS_Type",
@@ -107,7 +113,7 @@ module.exports = {
       ...invoice,
       SalesPerson: getSalesPerson(invoice.SalesPersonCode, sap),
       DocumentLines: getInvoiceDocumentLines(invoice.DocEntry, sap),
-      TaxSeries: getInvoiceTaxSeries(invoice.U_GPOS_TaxSeriesCode, sap)
+      TaxSerie: getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
     } : null
   },
   async invoices (args, { sap }) {
@@ -133,7 +139,7 @@ module.exports = {
       optionalQuery.push(/*sql*/`AND T0."SlpCode" = ?`)
     }
     if (filter !== null) {
-      optionalArgs.push(filter)
+      optionalArgs.push(`%${filter}%`)
       optionalQuery.push(/*sql*/`
         AND CONTAINS((
           T0."CardCode",
@@ -179,7 +185,7 @@ module.exports = {
           T0."Comments",
           T0."JrnlMemo" AS "JournalMemo",
           T0."GroupNum" AS "PaymentGroupCode",
-          T0."CANCELED" AS "Cancelled",
+          CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
           T0."U_TIPODOC",
           T0."U_NIT",
           T0."U_RAZSOC",
@@ -188,6 +194,8 @@ module.exports = {
           T0."U_NROAUTOR",
           T0."U_ESTADOFC",
           T0."U_NRO_FAC",
+          T0."U_FECHALIM",
+          T0."U_EXENTO",
           T0."U_GPOS_SalesPointCode",
           T0."U_GPOS_Serial",
           T0."U_GPOS_Type",
@@ -214,11 +222,11 @@ module.exports = {
         ...invoice,
         SalesPerson: getSalesPerson(invoice.SalesPersonCode, sap),
         DocumentLines: getInvoiceDocumentLines(invoice.DocEntry, sap),
-        TaxSeries: getInvoiceTaxSeries(invoice.U_GPOS_TaxSeriesCode, sap)
+        TaxSerie: getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
       }))
     }
   },
-  async item ({ SalesPointCode, PrimaryPriceList, SecondaryPriceList, Code, CodeType = 'ItemCode', }, { sap }) {
+  async item ({ SalesPointCode, PrimaryPriceList = null, SecondaryPriceList = null, Code, CodeType = 'ItemCode', }, { sap }) {
     const hana = await sap.hana
     const [ item ] = await hana.execute(/*sql*/`
       SELECT T0."ItemCode",
@@ -226,13 +234,13 @@ module.exports = {
         TO_BOOLEAN(T0."U_GPOS_AllowManualPrice") AS "AllowManualPrice",
         TO_BOOLEAN(T0."U_GPOS_AllowCredit") AS "AllowCredit",
         TO_BOOLEAN(T0."U_GPOS_AllowAffiliate") AS "AllowAffiliate",
-        T2."Price" AS "PrimaryPrice",
-        T3."Price" AS "SecondaryPrice",
+        ${PrimaryPriceList === null ? '' : /*sql*/`T2."Price" AS "PrimaryPrice",`}
+        ${SecondaryPriceList === null ? '' : /*sql*/`T3."Price" AS "SecondaryPrice",`}
         T4."OnHand" AS "Stock"
       FROM OITM T0
       INNER JOIN "@GPOS_SALESITEM" T1 ON T1."U_ItemCode" = T0."ItemCode" AND T1."Code" = ?
-      LEFT JOIN ITM1 T2 ON T2."ItemCode" = T0."ItemCode" AND T2."PriceList" = ? AND T2."Price" <> 0
-      LEFT JOIN ITM1 T3 ON T3."ItemCode" = T0."ItemCode" AND T3."PriceList" = ? AND T3."Price" <> 0
+      ${PrimaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T2 ON T2."ItemCode" = T0."ItemCode" AND T2."PriceList" = ? AND T2."Price" <> 0`}
+      ${SecondaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T3 ON T3."ItemCode" = T0."ItemCode" AND T3."PriceList" = ? AND T3."Price" <> 0`}
       LEFT JOIN OITW T4 ON T4."ItemCode" = T0."ItemCode" AND T4."WhsCode" = T1."U_WarehouseCode" AND T0."InvntItem" = 'Y'
       WHERE T0."${CodeType === 'BarCode' ? 'CodeBars' : 'ItemCode'}" = ?
       ORDER BY T0."ItemName" ASC
@@ -242,19 +250,29 @@ module.exports = {
       PrimaryPriceList,
       SecondaryPriceList,
       Code
-    ])
+    ].filter(value => value !== null))
 
     return item
   },
   async items (args, { sap }) {
     const {
-      limit = 10,
+      limit = null,
       offset = 0,
       filter = null,
       SalesPointCode,
-      PrimaryPriceList,
-      SecondaryPriceList
+      PrimaryPriceList = null,
+      SecondaryPriceList = null
     } = args
+
+    const queryParams = [
+      SalesPointCode,
+      PrimaryPriceList,
+      SecondaryPriceList,
+      !!filter,
+      `%${filter}%`,
+      limit,
+      offset
+    ]
       
     const hana = await sap.hana
     const [
@@ -265,50 +283,53 @@ module.exports = {
         SELECT COUNT(*) as "count"
         FROM OITM T0
         INNER JOIN "@GPOS_SALESITEM" T1 ON T1."U_ItemCode" = T0."ItemCode" AND T1."Code" = ?
-        WHERE ? = false OR CONTAINS((
-          T0."ItemCode",
-          T0."ItemName",
-          T0."CodeBars",
-          T0."FrgnName",
-          T0."U_GPOS_Tags"
-        ), ?)
+        ${filter === null ? '' : /*sql*/`
+          WHERE CONTAINS((
+            T0."ItemCode",
+            T0."ItemName",
+            T0."CodeBars",
+            T0."FrgnName",
+            T0."U_GPOS_Tags"
+          ), ?)
+        `}
       `, [
         SalesPointCode,
-        !!filter,
-        `%${filter}%`
-      ]),
+        filter === null ? null : `%${filter}%`
+      ].filter(value => value !== null)),
       hana.execute(/*sql*/`
         SELECT T0."ItemCode",
           T0."ItemName",
           TO_BOOLEAN(T0."U_GPOS_AllowManualPrice") AS "AllowManualPrice",
           TO_BOOLEAN(T0."U_GPOS_AllowCredit") AS "AllowCredit",
           TO_BOOLEAN(T0."U_GPOS_AllowAffiliate") AS "AllowAffiliate",
-          T2."Price" AS "PrimaryPrice",
-          T3."Price" AS "SecondaryPrice",
+          ${PrimaryPriceList === null ? '' : /*sql*/`T2."Price" AS "PrimaryPrice",`}
+          ${SecondaryPriceList === null ? '' : /*sql*/`T3."Price" AS "SecondaryPrice",`}
           T4."OnHand" AS "Stock"
         FROM OITM T0
         INNER JOIN "@GPOS_SALESITEM" T1 ON T1."U_ItemCode" = T0."ItemCode" AND T1."Code" = ?
-        LEFT JOIN ITM1 T2 ON T2."ItemCode" = T0."ItemCode" AND T2."PriceList" = ? AND T2."Price" <> 0
-        LEFT JOIN ITM1 T3 ON T3."ItemCode" = T0."ItemCode" AND T3."PriceList" = ? AND T3."Price" <> 0
+        ${PrimaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T2 ON T2."ItemCode" = T0."ItemCode" AND T2."PriceList" = ? AND T2."Price" <> 0`}
+        ${SecondaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T3 ON T3."ItemCode" = T0."ItemCode" AND T3."PriceList" = ? AND T3."Price" <> 0`}
         LEFT JOIN OITW T4 ON T4."ItemCode" = T0."ItemCode" AND T4."WhsCode" = T1."U_WarehouseCode" AND T0."InvntItem" = 'Y'
-        WHERE ? = false OR CONTAINS((
-          T0."ItemCode",
-          T0."ItemName",
-          T0."CodeBars",
-          T0."FrgnName",
-          T0."U_GPOS_Tags"
-        ), ?)
+        ${filter === null ? '' : /*sql*/`
+          WHERE CONTAINS((
+            T0."ItemCode",
+            T0."ItemName",
+            T0."CodeBars",
+            T0."FrgnName",
+            T0."U_GPOS_Tags"
+          ), ?)
+        `}
         ORDER BY T0."ItemName" ASC
         LIMIT ? OFFSET ?
       `, [
         SalesPointCode,
         PrimaryPriceList,
         SecondaryPriceList,
-        !!filter,
-        `%${filter}%`,
+        filter === null ? null : `%${filter}%`
+      ].filter(value => value !== null).concat([
         limit,
         offset
-      ])
+      ]))
     ])
 
     return {
@@ -323,6 +344,7 @@ module.exports = {
         T0."Code",
         T0."Name"
       FROM "@GPOS_SALESPOINT" T0
+      WHERE T0."Code" = ?
       LIMIT 1
     `, [
       Code
@@ -430,6 +452,16 @@ module.exports = {
     // const { data: { value } } = await sap.get(`/CreditCards`)
     // return value
   },
+  async changerate (args, { sap }) {
+    const hana = await sap.hana
+    const [{ Rate }] = await hana.execute(/*sql*/`
+      SELECT T0."Rate"
+      FROM ORTT T0
+      WHERE T0."Currency" = 'USD'
+      AND T0."RateDate" = CURRENT_DATE
+    `)
+    return Rate
+  },
   async business_partner ({ Code, CodeType }, { sap }) {
     const hana = await sap.hana
     const [ business_partner ] = await hana.execute(/*sql*/`
@@ -439,8 +471,8 @@ module.exports = {
         T0."CardFName" AS "CardForeignName",
         T0."LicTradNum" AS "FederalTaxID",
         T0."GroupNum" AS "PayTermsGrpCode",
-        T0."Affiliate",
-        T0."VatStatus" AS "VatLiable",
+        CASE WHEN T0."Affiliate" = 'Y' THEN TRUE ELSE FALSE END AS "Affiliate",
+        CASE WHEN T0."VatStatus" = 'Y' THEN TRUE ELSE FALSE END AS "VatLiable",
         T1."ListNum" AS "PrimaryPriceList",
         T1."ListName" AS "PrimaryPriceListName",
         T2."ListNum" AS "SecondaryPriceList",
@@ -474,9 +506,7 @@ module.exports = {
         ), ?))
       `, [
         !!filter,
-        `%${filter}%`,
-        offset,
-        limit
+        `%${filter}%`
       ]),
       hana.execute(/*sql*/`
         SELECT
@@ -485,8 +515,8 @@ module.exports = {
           T0."CardFName" AS "CardForeignName",
           T0."LicTradNum" AS "FederalTaxID",
           T0."GroupNum" AS "PayTermsGrpCode",
-          T0."Affiliate",
-          T0."VatStatus" AS "VatLiable",
+          CASE WHEN T0."Affiliate" = 'Y' THEN TRUE ELSE FALSE END AS "Affiliate",
+          CASE WHEN T0."VatStatus" = 'Y' THEN TRUE ELSE FALSE END AS "VatLiable",
           T1."ListNum" AS "PrimaryPriceList",
           T1."ListName" AS "PrimaryPriceListName",
           T2."ListNum" AS "SecondaryPriceList",
@@ -509,11 +539,10 @@ module.exports = {
       `, [
         !!filter,
         `%${filter}%`,
-        offset,
-        limit
+        limit,
+        offset
       ])
     ])
-
     return {
       totalItems: count,
       pageItems: items

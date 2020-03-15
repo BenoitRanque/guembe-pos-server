@@ -3,10 +3,6 @@ const { buildSchema } = require('graphql')
 // Construct a schema, using GraphQL schema language
 const schema = buildSchema(/* GraphQL */`
   scalar Date
-  scalar Time
-  scalar json
-  scalar DocEntry
-  scalar DocNum
 
   type Session {
     Token: String!
@@ -73,13 +69,13 @@ const schema = buildSchema(/* GraphQL */`
     Quantity: Int!
     PriceAfterVAT: Float!
   }
-  type TaxSeries {
-    U_ACTIVIDAD: String
-    U_LEYENDA: String
-    U_DIRECCION: String
-    U_CIUDAD: String
-    U_PAIS: String
-    U_SUCURSAL: String
+  type TaxSerie {
+    U_ACTIVIDAD: String!
+    U_LEYENDA: String!
+    U_DIRECCION: String!
+    U_CIUDAD: String!
+    U_PAIS: String!
+    U_SUCURSAL: String!
   }
   type InvoicePagination {
     totalItems: Int!
@@ -97,7 +93,7 @@ const schema = buildSchema(/* GraphQL */`
     JournalMemo: String
     PaymentGroupCode: Int!
     DocTime: String
-    Cancelled: String
+    Cancelled: Boolean!
     U_TIPODOC: Int
     U_NIT: String
     U_RAZSOC: String
@@ -106,13 +102,15 @@ const schema = buildSchema(/* GraphQL */`
     U_NROAUTOR: String
     U_ESTADOFC: String
     U_NRO_FAC: String
+    U_FECHALIM: Date
+    U_EXENTO: Float
     U_GPOS_SalesPointCode: String
     U_GPOS_Serial: Int
     U_GPOS_Type: Int
     U_GPOS_TaxSeriesCode: String
     DocumentLines: [ItemLine!]!
     SalesPerson: SalesPerson
-    TaxSeries: TaxSeries
+    TaxSerie: TaxSerie
   }
   enum InvoiceCodeTypeEnum {
     DocEntry
@@ -192,18 +190,19 @@ const schema = buildSchema(/* GraphQL */`
     session_login (Credentials: CredentialsInput!): Session!
     session_logout: Boolean!
     session_refresh: Session!
-    invoices (limit: Int offset: Int filter: String SalesPointCode: String SalesPerson: Int FromDate: Date! ToDate: Date): InvoicePagination
+    invoices (limit: Int offset: Int filter: String SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date): InvoicePagination
     invoice (DocEntry: Int!): Invoice!
     employees (limit: Int offset: Int showUnset: Boolean): EmployeePagination!
     employee (EmployeeID: Int!): Employee
     creditcards (limit: Int offset: Int): CreditCardPagination!
     creditcard (CreditCard: Int!): CreditCard
+    changerate: Float
     salespoints (limit: Int offset: Int): SalesPointPagination!
     salespoint (Code: String!): SalesPoint
     business_partners (limit: Int offset: Int filter: String): BusinessPartnerPagination!
     business_partner (Code: String CodeType: BusinessPartnerCodeTypeEnum): BusinessPartner
-    items (limit: Int offset: Int filter: String SalesPointCode: String! PrimaryPriceList: Int! SecondaryPriceList: Int!): ItemPagination!
-    item (Code: String! CodeType: ItemCodeTypeEnum SalesPointCode: String! PrimaryPriceList: Int! SecondaryPriceList: Int!): Item
+    items (limit: Int offset: Int filter: String SalesPointCode: String! PrimaryPriceList: Int SecondaryPriceList: Int): ItemPagination!
+    item (Code: String! CodeType: ItemCodeTypeEnum SalesPointCode: String! PrimaryPriceList: Int SecondaryPriceList: Int): Item
   }
 
   type Mutation {
