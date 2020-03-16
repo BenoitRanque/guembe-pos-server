@@ -242,7 +242,7 @@ module.exports = {
       ${PrimaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T2 ON T2."ItemCode" = T0."ItemCode" AND T2."PriceList" = ? AND T2."Price" <> 0`}
       ${SecondaryPriceList === null ? '' : /*sql*/`LEFT JOIN ITM1 T3 ON T3."ItemCode" = T0."ItemCode" AND T3."PriceList" = ? AND T3."Price" <> 0`}
       LEFT JOIN OITW T4 ON T4."ItemCode" = T0."ItemCode" AND T4."WhsCode" = T1."U_WarehouseCode" AND T0."InvntItem" = 'Y'
-      WHERE T0."${CodeType === 'BarCode' ? 'CodeBars' : 'ItemCode'}" = ?
+      WHERE ${CodeType === 'BarCode' ? /*sql*/`CONTAINS((T0."ItemCode", T0."CodeBars"), ?)` : /*sql*/`T0."ItemCode" = ?`}
       ORDER BY T0."ItemName" ASC
       LIMIT 1
     `, [
@@ -263,16 +263,6 @@ module.exports = {
       PrimaryPriceList = null,
       SecondaryPriceList = null
     } = args
-
-    const queryParams = [
-      SalesPointCode,
-      PrimaryPriceList,
-      SecondaryPriceList,
-      !!filter,
-      `%${filter}%`,
-      limit,
-      offset
-    ]
       
     const hana = await sap.hana
     const [
