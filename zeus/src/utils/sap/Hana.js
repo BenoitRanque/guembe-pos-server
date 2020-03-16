@@ -69,20 +69,8 @@ class HanaResultSetAsync {
   nextResult () { return this.asyncProxy('nextResult') }
 }
 
-async function handleQuery (callback) {
-  const client = new HanaClientAsync()
-  await client.connect()
-  try {
-    const result = await callback(client)
-    return result
-  } finally {
-    await client.disconnect()
-  }
-}
-
 module.exports = {
   HanaClientAsync,
   HanaStatementAsync,
-  HanaResultSetAsync,
-  handleQuery
+  HanaResultSetAsync
 }
