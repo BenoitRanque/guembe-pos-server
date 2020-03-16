@@ -7,7 +7,7 @@ module.exports = {
     // TODO: validate roles
     const session = requireSession(req)
 
-    Data.SalesPersonCode = session.SalesEmployeeCode
+    Data.SalesPersonCode = session.SalesPerson.SalesPersonCode
 
     const payload = {
       Operation: 'QUICKSALE',
