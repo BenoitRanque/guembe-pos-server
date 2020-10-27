@@ -1,41 +1,161 @@
 const { getSalesPerson, getEmployeeFromEmployeeID, getEmployeeRoles } = require('../../../utils/employee')
 
-function getInvoiceDocumentLines (DocEntry, sap) {
-  return async () => {
-    const hana = await sap.hana
-    return hana.execute(/*sql*/`
-      SELECT
-        T0."ItemCode" AS "ItemCode",
-        T0."Dscription" AS "ItemDescription",
-        T0."Quantity" AS "Quantity",
-        T0."PriceAfVAT" AS "PriceAfterVAT"
-      FROM INV1 T0
-      WHERE T0."DocEntry" = ?
-    `, [ DocEntry ])
-  }
+async function getSalesPoint (Code, sap ) {
+  const hana = await sap.hana
+  const [ salespoint = null ] = await hana.execute(/*sql*/`
+    SELECT
+      T0."Code",
+      T0."Name"
+    FROM "@GPOS_SALESPOINT" T0
+    WHERE T0."Code" = ?
+    LIMIT 1
+  `, [
+    Code
+  ])
+  return salespoint
 }
-function getInvoiceTaxSerie (TaxSerieCode, sap) {
-  return async () => {
-    const hana = await sap.hana
-    const [ TaxSerie ] = await hana.execute(/*sql*/`
-      SELECT
-        T0."U_ACTIVIDAD",
-        T0."U_LEYENDA",
-        T0."U_DIRECCION",
-        T0."U_CIUDAD",
-        T0."U_PAIS",
-        T0."U_SUCURSAL"
-      FROM "@LB_CDC_DOS" T0
-      WHERE T0."Code" = ?
-      LIMIT 1
-    `, [ TaxSerieCode ])
-    return TaxSerie
-  }
+
+async function getSalesOrder (DocEntry, sap) {
+  const hana = await sap.hana
+  const [ salesOrder ] = await hana.execute(/*sql*/`
+    SELECT
+      T0."DocEntry",
+      T0."DocNum",
+      T0."DocDate",
+      SUBSTRING(T0."DocTime", 1, LENGTH(T0."DocTime") - 2) || ':' || RIGHT(T0."DocTime", 2) AS "DocTime",
+      T0."CardCode",
+      T0."CardName",
+      T0."SlpCode" AS "SalesPersonCode",
+      T0."DocTotal",
+      T0."Comments",
+      T0."JrnlMemo" AS "JournalMemo",
+      CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
+      CASE T0."U_GPOS_Type"
+        WHEN 101 THEN 'QUICKSALE'
+        WHEN 102 THEN 'TABLE_OPEN'    
+        WHEN 103 THEN 'TABLE_CLOSED'      
+        WHEN 104 THEN 'TABLE_INVOICED'      
+        WHEN 105 THEN 'TABLE_CANCELLED'
+        ELSE NULL END AS "Type",      
+      T0."U_GPOS_SalesPointCode",
+      T0."U_GPOS_Serial",
+      T0."U_GPOS_Type"
+    FROM ORDR T0
+    WHERE T0."CANCELED" <> 'C' AND T0."U_GPOS_Type" <> 0
+    AND T0."DocEntry" = ?
+    LIMIT 1
+  `, [ DocEntry ])
+  return salesOrder ? {
+    ...salesOrder,
+    SalesPerson: () => getSalesPerson(salesOrder.SalesPersonCode, sap),
+    SalesPoint: () => getSalesPoint(salesOrder.U_GPOS_SalesPointCode, sap),
+    DocumentLines: () => getSalesOrderDocumentLines(salesOrder.DocEntry, sap)
+  } : null
+}
+
+async function getSalesOrderDocumentLines(DocEntry, sap) {
+  const hana = await sap.hana
+  const lines = await hana.execute(/*sql*/`
+    SELECT
+      T0."ItemCode" AS "ItemCode",
+      T0."Dscription" AS "ItemDescription",
+      T0."Quantity" AS "Quantity",
+      T0."PriceAfVAT" AS "Price",
+      T0."SlpCode" AS "SalesPersonCode"
+    FROM RDR1 T0
+    WHERE T0."DocEntry" = ?
+  `, [ DocEntry ])
+  
+  return lines.map(line => ({
+    ...line,
+    SalesPerson: () => getSalesPerson(line.SalesPersonCode, sap)
+  }))
+}
+
+async function getInvoice (DocEntry, sap) {
+  const hana = await sap.hana
+  const [ invoice ] = await hana.execute(/*sql*/`
+    SELECT
+      T0."DocEntry",
+      T0."DocNum",
+      T0."DocDate",
+      SUBSTRING(T0."DocTime", 1, LENGTH(T0."DocTime") - 2) || ':' || RIGHT(T0."DocTime", 2) AS "DocTime",
+      T0."CardCode",
+      T0."CardName",
+      T0."NumAtCard",
+      T0."SlpCode" AS "SalesPersonCode",
+      T0."DocTotal",
+      T0."Comments",
+      T0."JrnlMemo" AS "JournalMemo",
+      T0."GroupNum" AS "PaymentGroupCode",
+      CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
+      T0."U_TIPODOC",
+      T0."U_NIT",
+      T0."U_RAZSOC",
+      T0."U_CCFACANU",
+      T0."U_CODCTRL",
+      T0."U_NROAUTOR",
+      T0."U_ESTADOFC",
+      T0."U_NRO_FAC",
+      T0."U_FECHALIM",
+      T0."U_EXENTO",
+      T0."U_GPOS_SalesPointCode",
+      T0."U_GPOS_Serial",
+      T0."U_GPOS_Type",
+      T0."U_GPOS_TaxSeriesCode"
+    FROM OINV T0
+    WHERE T0."CANCELED" <> 'C' AND T0."U_GPOS_Type" <> 0
+    AND T0."DocEntry" = ?
+    LIMIT 1
+  `, [ DocEntry ])
+  return invoice ? {
+    ...invoice,
+    SalesPerson: () => getSalesPerson(invoice.SalesPersonCode, sap),
+    SalesPoint: () => getSalesPoint(invoice.U_GPOS_SalesPointCode, sap),
+    DocumentLines: () => getInvoiceDocumentLines(invoice.DocEntry, sap),
+    TaxSerie: () => getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
+  } : null
+}
+
+async function getInvoiceDocumentLines (DocEntry, sap) {
+  const hana = await sap.hana
+  const lines = await hana.execute(/*sql*/`
+    SELECT
+      T0."ItemCode" AS "ItemCode",
+      T0."Dscription" AS "ItemDescription",
+      T0."Quantity" AS "Quantity",
+      T0."PriceAfVAT" AS "Price",
+      T0."SlpCode" AS "SalesPersonCode"
+    FROM INV1 T0
+    WHERE T0."DocEntry" = ?
+  `, [ DocEntry ])
+
+  return lines.map(line => ({
+    ...line,
+    SalesPerson: () => getSalesPerson(line.SalesPersonCode, sap)
+  }))
+}
+async function getInvoiceTaxSerie (TaxSerieCode, sap) {
+  const hana = await sap.hana
+  const [ TaxSerie ] = await hana.execute(/*sql*/`
+    SELECT
+      T0."U_ACTIVIDAD",
+      T0."U_LEYENDA",
+      T0."U_DIRECCION",
+      T0."U_CIUDAD",
+      T0."U_PAIS",
+      T0."U_SUCURSAL"
+    FROM "@LB_CDC_DOS" T0
+    WHERE T0."Code" = ?
+    LIMIT 1
+  `, [ TaxSerieCode ])
+
+  return TaxSerie
 }
 
 module.exports = {
   async employee ({ EmployeeID }, { sap }) {
-    return getEmployeeFromEmployeeID(EmployeeID, sap)()
+    return getEmployeeFromEmployeeID(EmployeeID, sap)
   },
   async employees ({ limit = null, offset = 0, showUnset = false }, { sap }) {
     const hana = await sap.hana
@@ -45,6 +165,7 @@ module.exports = {
     ] = await Promise.all([
       hana.execute(/*sql*/`
         SELECT COUNT(*) AS "count" FROM OHEM T0
+        ${showUnset ? '' :/*sql*/`WHERE T0."U_GPOS_Password" IS NOT NULL`}
       `),
       hana.execute(/*sql*/`
         SELECT
@@ -67,54 +188,118 @@ module.exports = {
         ...Employee,
         SalesPerson: {
           ...Employee,
-          Employee: getEmployeeFromEmployeeID(Employee.EmployeeID, sap)
+          Employee: () => getEmployeeFromEmployeeID(Employee.EmployeeID, sap)
         },
-        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
+        Roles: () => getEmployeeRoles(Employee.EmployeeID, sap)
+      }))
+    }
+  },
+  async sales_order ({ DocEntry }, { sap }) {
+    return getSalesOrder(DocEntry, sap)
+  },
+  async sales_orders (args, { sap }) {
+    const {
+      limit = null,
+      offset = 0,
+      FromDate,
+      ToDate,
+      SalesPointCode = null,
+      SalesPersonCode = null,
+      Type = null
+    } = args
+
+    const optionalArgs = []
+    const optionalQuery = []
+
+    if (SalesPointCode !== null) {
+      optionalArgs.push(SalesPointCode)
+      optionalQuery.push(/*sql*/`AND T0."U_GPOS_SalesPointCode" = ?`)
+    }
+    if (SalesPersonCode !== null) {
+      optionalArgs.push(SalesPersonCode)
+      optionalQuery.push(/*sql*/`AND T0."SlpCode" = ?`)
+    }
+    if (Type !== null && Type.length) {
+      const TypeMap = {
+        QUICKSALE: 101,
+        TABLE_OPEN: 102,    
+        TABLE_CLOSED: 103,      
+        TABLE_INVOICED: 104,      
+        TABLE_CANCELLED: 105
+      }
+
+      optionalQuery.push(`AND T0."U_GPOS_Type" IN (${Type.map(type => TypeMap[type]).join(', ')})`)
+    }
+
+    const hana = await sap.hana
+    const [
+      [{ count }],
+      salesOrders
+    ] = await Promise.all([
+      hana.execute(/*sql*/`
+        SELECT COUNT(*) AS "count"
+        FROM ORDR T0
+        WHERE T0."CANCELED" <> 'C' AND T0."U_GPOS_Type" <> 0
+        AND T0."DocDate" >= ?
+        AND T0."DocDate" <= ?
+        ${optionalQuery.join(' ')}
+      `, [
+        FromDate,
+        ToDate,
+        ...optionalArgs
+      ]),
+      hana.execute(/*sql*/`
+        SELECT
+          T0."DocEntry",
+          T0."DocNum",
+          TO_DATE(T0."DocDate") AS "DocDate",
+          SUBSTRING(T0."DocTime", 1, LENGTH(T0."DocTime") - 2) || ':' || RIGHT(T0."DocTime", 2) AS "DocTime",
+          T0."CardCode",
+          T0."CardName",
+          T0."NumAtCard",
+          T0."SlpCode" AS "SalesPersonCode",
+          T0."DocTotal",
+          T0."Comments",
+          T0."JrnlMemo" AS "JournalMemo",
+          CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
+          CASE T0."U_GPOS_Type"
+            WHEN 101 THEN 'QUICKSALE'
+            WHEN 102 THEN 'TABLE_OPEN'    
+            WHEN 103 THEN 'TABLE_CLOSED'      
+            WHEN 104 THEN 'TABLE_INVOICED'      
+            WHEN 105 THEN 'TABLE_CANCELLED'
+            ELSE NULL END AS "Type", 
+          T0."U_GPOS_SalesPointCode",
+          T0."U_GPOS_Serial",
+          T0."U_GPOS_Type"
+        FROM ORDR T0
+        WHERE T0."CANCELED" <> 'C' AND T0."U_GPOS_Type" <> 0
+        AND T0."DocDate" >= ?
+        AND T0."DocDate" <= ?
+        ${optionalQuery.join(' ')}
+        ORDER BY T0."DocDate" DESC, T0."U_GPOS_SalesPointCode" ASC, T0."U_GPOS_Serial" DESC
+        LIMIT ?
+        OFFSET ?
+      `, [
+        FromDate,
+        ToDate,
+        ...optionalArgs,
+        limit,
+        offset
+      ])
+    ])
+    return {
+      totalItems: count,
+      pageItems: salesOrders.map(salesOrder => ({
+        ...salesOrder,
+        SalesPerson: () => getSalesPerson(salesOrder.SalesPersonCode, sap),
+        SalesPoint: () => getSalesPoint(salesOrder.U_GPOS_SalesPointCode, sap),
+        DocumentLines: () => getSalesOrderDocumentLines(salesOrder.DocEntry, sap),
       }))
     }
   },
   async invoice ({ DocEntry }, { sap }) {
-    const hana = await sap.hana
-    const [ invoice ] = await hana.execute(/*sql*/`
-      SELECT
-        T0."DocEntry",
-        T0."DocNum",
-        T0."DocDate",
-        SUBSTRING(T0."DocTime", 1, LENGTH(T0."DocTime") - 2) || ':' || RIGHT(T0."DocTime", 2) AS "DocTime",
-        T0."CardCode",
-        T0."CardName",
-        T0."NumAtCard",
-        T0."SlpCode" AS "SalesPersonCode",
-        T0."DocTotal",
-        T0."Comments",
-        T0."JrnlMemo" AS "JournalMemo",
-        T0."GroupNum" AS "PaymentGroupCode",
-        CASE WHEN T0."CANCELED" = 'Y' THEN TRUE ELSE FALSE END AS "Cancelled",
-        T0."U_TIPODOC",
-        T0."U_NIT",
-        T0."U_RAZSOC",
-        T0."U_CCFACANU",
-        T0."U_CODCTRL",
-        T0."U_NROAUTOR",
-        T0."U_ESTADOFC",
-        T0."U_NRO_FAC",
-        T0."U_FECHALIM",
-        T0."U_EXENTO",
-        T0."U_GPOS_SalesPointCode",
-        T0."U_GPOS_Serial",
-        T0."U_GPOS_Type",
-        T0."U_GPOS_TaxSeriesCode"
-      FROM OINV T0
-      WHERE T0."CANCELLED" <> 'C' AND T0."U_GPOS_Type" <> 0
-      AND T0."DocEntry" = ?
-      LIMIT 1
-    `, [ DocEntry ])
-    return invoice ? {
-      ...invoice,
-      SalesPerson: getSalesPerson(invoice.SalesPersonCode, sap),
-      DocumentLines: getInvoiceDocumentLines(invoice.DocEntry, sap),
-      TaxSerie: getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
-    } : null
+    return getInvoice(DocEntry, sap)
   },
   async invoices (args, { sap }) {
     const {
@@ -205,7 +390,7 @@ module.exports = {
         AND T0."DocDate" >= ?
         AND T0."DocDate" <= ?
         ${optionalQuery.join(' ')}
-        ORDER BY T0."DocDate" ASC, T0."U_GPOS_Serial" ASC
+        ORDER BY T0."DocDate" DESC, T0."U_GPOS_SalesPointCode" ASC, T0."U_GPOS_Serial" DESC
         LIMIT ?
         OFFSET ?
       `, [
@@ -220,9 +405,10 @@ module.exports = {
       totalItems: count,
       pageItems: invoices.map(invoice => ({
         ...invoice,
-        SalesPerson: getSalesPerson(invoice.SalesPersonCode, sap),
-        DocumentLines: getInvoiceDocumentLines(invoice.DocEntry, sap),
-        TaxSerie: getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
+        SalesPerson: () => getSalesPerson(invoice.SalesPersonCode, sap),
+        SalesPoint: () => getSalesPoint(invoice.U_GPOS_SalesPointCode, sap),
+        DocumentLines: () => getInvoiceDocumentLines(invoice.DocEntry, sap),
+        TaxSerie: () => getInvoiceTaxSerie(invoice.U_GPOS_TaxSeriesCode, sap)
       }))
     }
   },
@@ -328,24 +514,7 @@ module.exports = {
     }
   },
   async salespoint ({ Code }, { sap }) {
-    const hana = await sap.hana
-    const [ salespoint = null ] = await hana.execute(/*sql*/`
-      SELECT
-        T0."Code",
-        T0."Name"
-      FROM "@GPOS_SALESPOINT" T0
-      WHERE T0."Code" = ?
-      LIMIT 1
-    `, [
-      Code
-    ])
-    return salespoint
-    // const { data: salespoint } = await sap.get(`/GPosSalesPoint('${Code}')`)
-
-    // return {
-    //   Code: salespoint.Code,
-    //   Name: salespoint.Name
-    // }
+    return getSalesPoint(Code, sap)
   },
   async salespoints ({ limit = null, offset = 0 }, { sap }) {
     const hana = await sap.hana
@@ -374,28 +543,6 @@ module.exports = {
       totalItems: count,
       pageItems: items
     }
-    // const params = {
-    //   '$orderby': `Name asc`
-    // }
-
-    // const headers = {
-    //   Prefer: 'odata.maxpagesize=0' 
-    // }
-
-    // if (limit !== null) {
-    //   params['$top'] = limit
-    //   params['$skip'] = offset
-    // }
-
-    // const { data: { value: salespoints } } = await sap.get('/GPosSalesPoint', {
-    //   params,
-    //   headers
-    // })
-
-    // return salespoints.map(salespoint => ({
-    //   Code: salespoint.Code,
-    //   Name: salespoint.Name
-    // }))
   },
   async creditcard ({ CreditCard }, { sap }) {
     const hana = await sap.hana
@@ -408,9 +555,6 @@ module.exports = {
       LIMIT 1
     `, [ CreditCard ])
     return card
-
-    // const { data } = await sap.get(`/CreditCards(${CreditCardCode})`)
-    // return data
   },
   async creditcards ({ limit = null, offset = 0 }, { sap }) {
     const hana = await sap.hana
@@ -439,8 +583,6 @@ module.exports = {
       totalItems: count,
       pageItems: items
     }
-    // const { data: { value } } = await sap.get(`/CreditCards`)
-    // return value
   },
   async changerate (args, { sap }) {
     const hana = await sap.hana

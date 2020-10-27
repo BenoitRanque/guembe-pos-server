@@ -15,16 +15,16 @@ module.exports = {
     const Employee = await authenticateEmployee({ EmployeeID, Password }, sap)
     
     res.cookie('refresh-token', encodeRefreshToken(Employee), refreshCookieOptions)
-    
+
     return {
       Token: encodeAuthToken(Employee),
       Employee: {
         ...Employee,
         SalesPerson: {
           ...Employee.SalesPerson,
-          Employee: getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
+          Employee: () => getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
         },
-        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
+        Roles: () => getEmployeeRoles(Employee.EmployeeID, sap)
       }
     }
   },
@@ -49,9 +49,9 @@ module.exports = {
         ...Employee,
         SalesPerson: {
           ...Employee.SalesPerson,
-          Employee: getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
+          Employee: () => getEmployeeFromSalesPersonCode(Employee.SalesPerson.SalesPersonCode, sap)
         },
-        Roles: getEmployeeRoles(Employee.EmployeeID, sap)
+        Roles: () => getEmployeeRoles(Employee.EmployeeID, sap)
       }
     }
   }

@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
-// const { client: sap } = require('./sap/ServiceLayer')
 const { UnauthorizedError } = require('./errors')
-const { getEmployeeFromSalesPersonCode } = require('./employee')
 
 const ONE_MONTH = 30 * 24 * 60 * 60 * 1000
 const refreshCookieOptions = {

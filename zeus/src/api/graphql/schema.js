@@ -19,7 +19,7 @@ const schema = buildSchema(/* GraphQL */`
   input ItemInput {
     ItemCode: String!
     Quantity: Int!
-    PriceAfterVAT: Float!
+    Price: Float!
   }
   input PaymentInput {
     CashSum: Float!
@@ -47,10 +47,70 @@ const schema = buildSchema(/* GraphQL */`
     Invoice: InvoiceInput!
   }
 
+  input TableCreateInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    Items: [ItemInput!]!
+    Close: Boolean
+  }
+  input TableUpdateInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    Items: [ItemInput!]!
+    PurchaseOrderDocEntry: Int!
+    Close: Boolean
+  }
+  input TableCloseInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    PurchaseOrderDocEntry: Int!
+  }
+  input TableReopenInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    PurchaseOrderDocEntry: Int!
+  }
+  input TableCheckoutInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    Invoice: InvoiceInput!
+    PurchaseOrderDocEntry: Int!
+  }
+  input TableCancelInput {
+    SalesPointCode: String!,
+    CardCode: String!
+    PurchaseOrderDocEntry: Int!
+  }
+
   type QuickSale {
     Test: Boolean!
     Print: SalePrint 
+    SalesOrder: SalesOrder!
+    Invoices: [Invoice!]!
   }
+
+  type TableCreate {
+    Test: Boolean!
+    Print: SalePrint
+  }
+  type TableUpdate {
+    Test: Boolean!
+    Print: SalePrint
+  }
+  type TableClose {
+    Test: Boolean!
+  }
+  type TableReopen {
+    Test: Boolean!
+  }
+  type TableCheckout {
+    Test: Boolean!
+    Print: SalePrint
+  }
+  type TableCancel {
+    Test: Boolean!
+  }
+  
   type SalePrint {
     Orders: [PrintOrder!]
     Invoices: [Invoice!]
@@ -67,7 +127,8 @@ const schema = buildSchema(/* GraphQL */`
     ItemCode: String!
     ItemDescription: String!
     Quantity: Int!
-    PriceAfterVAT: Float!
+    Price: Float!
+    SalesPerson: SalesPerson
   }
   type TaxSerie {
     U_ACTIVIDAD: String!
@@ -77,6 +138,36 @@ const schema = buildSchema(/* GraphQL */`
     U_PAIS: String!
     U_SUCURSAL: String!
   }
+  type SalesOrderPagination {
+    totalItems: Int!
+    pageItems: [SalesOrder!]!
+  }
+  type SalesOrder {
+    Type: SalesOrderTypeEnum
+    DocEntry: Int!
+    DocNum: Int!
+    DocDate: Date!
+    DocTime: String!
+    CardCode: String!
+    CardName: String!
+    Cancelled: Boolean!
+    DocTotal: Float
+    Comments: String
+    JournalMemo: String
+    DocumentLines: [ItemLine!]!
+    SalesPoint: SalesPoint
+    SalesPerson: SalesPerson
+    U_GPOS_SalesPointCode: String
+    U_GPOS_Serial: Int
+    U_GPOS_Type: Int
+  }
+  enum SalesOrderTypeEnum {
+    QUICKSALE
+    TABLE_OPEN
+    TABLE_CLOSED
+    TABLE_INVOICED
+    TABLE_CANCELLED
+  }
   type InvoicePagination {
     totalItems: Int!
     pageItems: [Invoice!]!
@@ -85,15 +176,15 @@ const schema = buildSchema(/* GraphQL */`
     DocEntry: Int!
     DocNum: Int!
     DocDate: Date!
+    DocTime: String!
     CardCode: String!
     CardName: String!
+    Cancelled: Boolean!
     NumAtCard: String
     DocTotal: Float
     Comments: String
     JournalMemo: String
     PaymentGroupCode: Int!
-    DocTime: String
-    Cancelled: Boolean!
     U_TIPODOC: Int
     U_NIT: String
     U_RAZSOC: String
@@ -109,12 +200,9 @@ const schema = buildSchema(/* GraphQL */`
     U_GPOS_Type: Int
     U_GPOS_TaxSeriesCode: String
     DocumentLines: [ItemLine!]!
+    SalesPoint: SalesPoint
     SalesPerson: SalesPerson
     TaxSerie: TaxSerie
-  }
-  enum InvoiceCodeTypeEnum {
-    DocEntry
-    DocNum
   }
   type EmployeePagination {
     totalItems: Int!
@@ -190,6 +278,8 @@ const schema = buildSchema(/* GraphQL */`
     session_login (Credentials: CredentialsInput!): Session!
     session_logout: Boolean!
     session_refresh: Session!
+    sales_orders (Type: [SalesOrderTypeEnum!] limit: Int offset: Int SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date): SalesOrderPagination
+    sales_order (DocEntry: Int!): SalesOrder!
     invoices (limit: Int offset: Int filter: String SalesPointCode: String SalesPersonCode: Int FromDate: Date! ToDate: Date): InvoicePagination
     invoice (DocEntry: Int!): Invoice!
     employees (limit: Int offset: Int showUnset: Boolean): EmployeePagination!
@@ -207,6 +297,12 @@ const schema = buildSchema(/* GraphQL */`
 
   type Mutation {
     quick_sale (Data: QuickSaleInput! Test: Boolean!): QuickSale
+    table_create (Data: TableCreateInput! Test: Boolean!): TableCreate
+    table_update (Data: TableUpdateInput! Test: Boolean!): TableUpdate
+    table_close (Data: TableCloseInput! Test: Boolean!): TableClose
+    table_reopen (Data: TableReopenInput! Test: Boolean!): TableReopen
+    table_checkout (Data: TableCheckoutInput! Test: Boolean!): TableCheckout
+    table_cancel (Data: TableCancelInput! Test: Boolean!): TableCancel
     password_change (Credentials: CredentialsInput! NewPassword: String!): Boolean
     password_reset (SAPB1Credentials: SAPB1CredentialsInput! EmployeeID: Int! NewPassword: String): Boolean
   }
