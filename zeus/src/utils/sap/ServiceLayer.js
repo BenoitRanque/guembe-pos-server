@@ -4,6 +4,8 @@ const createAuthRefreshInterceptor = require('axios-auth-refresh').default
 
 class ServiceLayerClient {
   constructor ({ options = ServiceLayerClient.defaultOptions, credentials = ServiceLayerClient.defaultCredentials } = {}) {
+    console.log('Creating new client with credentials')
+    console.log(credentials)
     this.cookies = null
     this.options = options
     this.credentials = credentials
@@ -12,7 +14,7 @@ class ServiceLayerClient {
 
     client.interceptors.request.use(async request => {
         if (!this.cookies) {
-            this.cookies = await ServiceLayerClient.getSAPSessionCookies()
+            this.cookies = await ServiceLayerClient.getSAPSessionCookies({ options: this.options, credentials: this.credentials })
         }
         
         request.headers['Cookie'] = ServiceLayerClient.getCookieHeader(this.cookies)
@@ -88,7 +90,7 @@ class ServiceLayerClient {
       .join('; ')
   }
 
-  static async getSAPSessionCookies ({ options = ServiceLayerClient.defaultOptions, credentials = ServiceLayerClient.defaultCredentials } = {}) {
+  static async getSAPSessionCookies ({ options, credentials }) {
     const response = await axios.create(options)
       .post('/Login', credentials)
     const cookies = this.readSetCookieHeader(response.headers)

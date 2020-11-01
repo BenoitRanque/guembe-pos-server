@@ -99,6 +99,7 @@ const schema = buildSchema(/* GraphQL */`
   }
   type TableClose {
     Test: Boolean!
+    Print: SalePrint
   }
   type TableReopen {
     Test: Boolean!
@@ -114,10 +115,20 @@ const schema = buildSchema(/* GraphQL */`
   type SalePrint {
     Orders: [PrintOrder!]
     Invoices: [Invoice!]
+    Receipt: PrintReceipt
   }
   type PrintOrder {
     Printer: String!
     DocDate: Date!
+    SalesPersonCode: Int!
+    U_GPOS_Serial: Int!
+    U_GPOS_SalesPointCode: String!
+    DocumentLines: [ItemLine!]!
+  }
+  type PrintReceipt {
+    Printer: String!
+    DocDate: Date!
+    DocTotal: Float!
     SalesPersonCode: Int!
     U_GPOS_Serial: Int!
     U_GPOS_SalesPointCode: String!

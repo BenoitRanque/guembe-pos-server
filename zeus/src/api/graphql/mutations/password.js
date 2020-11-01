@@ -15,7 +15,7 @@ module.exports = {
 
     const serviceLayer = new ServiceLayerClient({
       credentials: {
-        ...ServiceLayerClient.defaultCredentials,
+        CompanyDB: ServiceLayerClient.defaultCredentials.CompanyDB,
         UserName: SAPB1Credentials.UserName,
         Password: SAPB1Credentials.Password
       }
